@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHIP 8 INTERPRETER in Javascript</title>
+    
+<style type="text/css">
+    body{
+        background-color: #000;
+        color: rgb(0, 170, 0);
+        font-family:'Lucida Sans', 'Lucida Sans Regular', Geneva, Verdana, sans-serif;
+        font-size: 0.9em;
+        font-variant: small-caps;
+        font-weight:bold ;
+        white-space: nowrap ;
+        
+        }
+    #status_display {
+        margin-top:1em;
+        }
+    
+    h1 {
+        margin-top:1rem;
+        margin-bottom:1rem;
+        }
+</style>
+
+</head>
+<body>
+    <div>CHIP 8</div>
+    <main>
+        <div class="console">
+            <h1>DISPLAY SCREEN</h1>
+            <canvas id="screen"></canvas>
+    
+        </div>
+    
+
+
+        <div id="status_display">
+            <div id="Vstatus_field">
+                IDLE...
+            </div>
+            <div id="Vlog_field">
+                IDLE...
+            </div>
+        </div>
+
+    </main>
+
+
+
+</body>
+<script src="JS/index.js"  type="module"></script>
+</html>
