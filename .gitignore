@@ -1,0 +1,8 @@
+todo-chip8.txt
+.git
+.project
+.pydevproject
+test*
+ROMs_test/*
+ROMs/*
+venv/
