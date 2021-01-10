@@ -1,6 +1,6 @@
 
-import {Keyboard, Display_Screen, Chip8CPU} from './chip8CPUmod.js';
-import {add_to_Vlog, add_to_Vstatus, clear_Vlog} from './base-utils.js';
+import {Keyboard, Display_Screen, Chip8CPU, FONTSET} from './chip8CPUmod.js';
+import {add_to_Vlog, add_to_Vstatus, clear_Vlog, clear_Vstatus} from './base-utils.js';
 
 //console.log('ENTERING JS')
 clear_Vlog()
@@ -13,14 +13,12 @@ function OnLoadFunction() {
     add_to_Vstatus("STATUS FIELD OK");
 
     const keyboard = new Keyboard();
-
-    const CHIP8 = new Chip8CPU(keyboard)  // Initialize
+    
+    const CHIP8 = new Chip8CPU(keyboard, FONTSET)  // Initialize
     
     const CHIP8_Screen = new Display_Screen(document.getElementById("screen"), 20);
     
     CHIP8_Screen.test()
-    console.log("SCREEN TEST")
-
 
     const ROM_dir = "./ROMs/"
     const ROM_filename = "Chip8Picture.ch8"
@@ -28,6 +26,12 @@ function OnLoadFunction() {
     CHIP8.ROMload( ROM_dir + ROM_filename )
 
     add_to_Vlog('After CHIP8.ROMload')
+
+    //add_to_Vlog('FONTSET:', CHIP8.fontset)
+    
+
+
+
 
 
     
@@ -42,36 +46,49 @@ function OnLoadFunction() {
 
         let fpsInterval, deltaTime, FPScurrent; 
 
+        clear_Vstatus();
+
         fpsInterval = 1000/FPS
 
         // now = Date.now();        // deprec.
         let now = performance.now();
 
         let elapsed = now - lastTime;
-        deltaTime = (now - lastTime)/1000
+        deltaTime = elapsed/1000
+
+        add_to_Vstatus("<BR>Elapsed time:" + elapsed + ' Delta time: ' + deltaTime + '<BR>');
 
         FPScurrent = 1/ deltaTime
+        
+
+        // CPU TICK
 
         if(elapsed > fpsInterval){
             //chip8.RUNcycle();
             loop_monitor++;
 
+
         }
 
+
+        
         if(loop_monitor%30==29)
             FPScurrent_show = Math.round(FPScurrent)
 
         lastTime = now;
         
-        document.getElementById("Vstatus_field").innerHTML= 
+        add_to_Vstatus(
             lastTime 
             + ' Loop: ' + loop_monitor 
             + ' FPS interval: ' 
             + fpsInterval + ' FPS current: ' + FPScurrent_show
             + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
+        );
 
-            
-        if(loop_monitor%200==199)
+
+                
+
+        if(loop_monitor%300==299)
             clear_Vlog()
 
         loop = requestAnimationFrame( MainLoop );
@@ -83,12 +100,6 @@ function OnLoadFunction() {
     //then = Date.now();
     var lastTime = performance.now();
     var loop = requestAnimationFrame( MainLoop ) ;
-
-
-
-
-
-
 
 
 }

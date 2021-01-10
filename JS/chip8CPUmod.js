@@ -1,4 +1,5 @@
-import {add_to_Vlog, add_to_Vstatus, clear_Vlog} from './base-utils.js';
+
+import {add_to_Vlog, add_to_Vstatus, clear_Vlog, arrays_equal} from './base-utils.js';
 
 
 
@@ -17,11 +18,30 @@ const SCREEN_SCALE = 10
 const CLS_BG = "#0a0"
 
 
+const MEMORY_SIZE = 4096;
+const REGISTERS_NUM = 0x10
+const STACK_SIZE = 0x10
 
 
 
 
-
+export const FONTSET = 
+   [0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5  
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80] // F
 
 
 
@@ -184,6 +204,8 @@ export class Display_Screen{
         this.setPixel(5, 2);
         this.setPixel(DISPLAY_WIDTH-1, DISPLAY_HEIGHT-1);
         this.draw();
+        add_to_Vlog('Screen Test');
+        console.log('Screen Test');
     }
 
 }
@@ -196,18 +218,60 @@ export class Display_Screen{
 
 export class Chip8CPU{
 
-    constructor(keyboard) {     // initialize()
+    constructor(keyboard,fontset, memory) {     // initialize()
 
-    add_to_Vlog('INIT KEYBOARD');
-   
-    this.keyboard = keyboard;
+    add_to_Vlog('INITIALIZE Chip8CPU');
+       
+    this.keyboard = keyboard;   
+    this.memory = new Uint8Array(MEMORY_SIZE);
+    //this.fontset = fontset;
 
-    add_to_Vlog('OK');
+    for (let i = 0; i < fontset.length; i++) {
+        this.memory[i] = fontset[i];
+    
+    }
+
+    add_to_Vlog('FONTS LOAD at 0x000');
+    
+    add_to_Vlog('FONTS codes: ' + ' ' + this.memory);
+    //console.log(this.memory);
+
+    this.SP = 0;
+    this.stack = new Uint8Array(REGISTERS_NUM);
+
+    this.opcode = 0;
+    
+    this.opc_mnemo = ''                 
+    //this.opcode_asm = ['']*6       
+                       
+    this.PC = 0x200     
+    this.I = 0          
+    this.V = new Uint8Array(STACK_SIZE)
+    
+    // TIMERS
+    
+    this.time = 0
+    this.tone = 0
+
+    this.draw_flag = false
+        
+    this.ROMloaded = ''
+    this.cycle_num = 0
+    
+    add_to_Vlog('chip8CPU REGISTERS ALL SET<BR>')
+
     }
     
   
+
+
     ROMload(filename){
-        add_to_Vlog('ROM Load...: ' + filename);
+        add_to_Vlog('ROM Load: ' + filename);
+
+        this.PC = 0x200
+        let program_offset = this.PC
+
+
         //window.cancelAnimationFrame(loop);
 
         fetch(filename).then( function (response) {
@@ -219,20 +283,59 @@ export class Chip8CPU{
             })
             .then( response => response.arrayBuffer())
             .then( buffer => {
-                console.log(buffer.byteLength);
+                //console.log(buffer.byteLength);
                 const program = new Uint8Array(buffer);
-                add_to_Vlog(program);
+
+                this.memory.set( program, program_offset);
+
+                add_to_Vlog('CODE SIZE: ' + ' ' + buffer.byteLength + ' bytes');
+                add_to_Vlog('CODE: ' + ' ' + program);
+
+                let RAM_test = this.memory.slice(program_offset, program_offset + buffer.byteLength);
+
+                add_to_Vlog('In RAM: ' + ' ' + RAM_test);
+
+                //console.log(RAM_test);
+
+                //console.log(this.memory.slice(program_offset, program_offset + buffer.byteLength));
+
+                if (arrays_equal (program, this.memory.slice(program_offset, program_offset + buffer.byteLength)) )
+                    add_to_Vlog("RAM vs ROM: <B>EQUAL</b>");
+                    else
+                    add_to_Vlog("RAM vs ROM: NOT EQUAL");
+
   
             })
             .catch(function (error) {
                 console.log('ROM FETCH PROBLEM: \n', error);
             });
-
+    this.ROMloaded = filename
     }
 
-    // RUNcycle(){
+    
+    
+    
+    RUNcycle(){
+        this.cycle_num += 1     //just for us
 
-    // }
+        // Decode & Execute
+        asm = this.OPCdecode()
+
+        // TIMERS update
+            
+        if (this.tone > 0)
+            {
+            add_to_Vlog('SOUND');
+            //winsound.Beep(7000 - self.tone * 200, 5)    
+            self.tone -= 1    
+            }
+            
+        if (self.time > 0)
+            self.time -= 1     
+
+
+
+    }
 
 
 }
