@@ -411,19 +411,19 @@ export class Chip8CPU{
         // //     merge both bytes and store them in an unsigned short (2 bytes datatype) 
         // //     then use the bitwise OR operation
         
-        
+        let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
 
         if(this.chip8_HTMLmonitor)
         {
-        let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
+        
 
         if(typeof(cell_active) != 'undefined' && cell_active != null)
             {
-            cell_active.setAttribute("style", "background-color:green;color:white; border: 1px solid red;font-weight:normal")
+            cell_active.setAttribute("style", "background-color:#000;color:white; border: 1px solid red;font-weight:normal")
             cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
-            cell_active.setAttribute("style", "background-color:green;color:white; border: 1px solid red;font-weight:normal")
+            cell_active.setAttribute("style", "background-color:#000;color:white; border: 1px solid red;font-weight:normal")
             }
-        }
+      }
     
         // cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
         // cell_active.setAttribute("style", "background-color:#0F0;color:#000; border: 1px solid blue;font-weight:bold")
