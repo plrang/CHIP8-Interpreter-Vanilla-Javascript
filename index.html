@@ -19,7 +19,35 @@
     #status_display {
         margin-top:1em;
         }
+
+    #chip8_monitor {
+        display:grid;
+        width:100%;
+        border:1px solid red;
+        grid-column-gap: 2px;
+        grid-row-gap: 2px;
+        grid-template-columns: repeat(32, 18px);
+    }       
+
+    .ch8MonCell, .ch8MonCell-active{ 
+        display: inline-grid;
+        border:1px solid rgb(0, 110, 33);
+        width:19px;
+        height:16px;
+        background-color: rgb(4, 24, 4);
+        color:white;
+        font-size:0.7rem;
+        align-items: center;
+        justify-items: center;
+    }       
     
+    .ch8MonCell-active { 
+        
+        background-color:black !important;
+        
+    }       
+
+
     h1 {
         margin-top:1rem;
         margin-bottom:1rem;
@@ -31,6 +59,15 @@
 <body>
     <div><b>CHIP 8</b></div>
     <main>
+        
+        <div id="chip8_program_listing">
+            CHIP8 Loaded Program Listing Display
+        </div>
+
+        <div id="chip8_monitor">
+         CHIP8 Visual Monitor
+        </div>
+        
         <div class="console">
             <h1>DISPLAY SCREEN</h1>
             <canvas id="screen"></canvas>

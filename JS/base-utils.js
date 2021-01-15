@@ -24,3 +24,23 @@ export function clear_Vstatus() {
 export const arrays_equal = (a, b) =>
 a.length === b.length &&
 a.every((v, i) => v === b[i]);
+
+
+
+export const listArrayAsHEX = (ar, cols) =>
+    {
+    let str = ''
+    let cnt = 1
+    for (const k of ar) {
+        str += k.toString(16)+', '; 
+        if (cnt%cols==0)
+            str += "<BR>"
+        cnt++    
+    }
+    return str.toUpperCase()
+}
+
+
+export const hex_dec = (name, val) => {
+    return `█ ${name}: #${val.toString(16).toUpperCase()} / ${val} `
+}
