@@ -59,7 +59,7 @@ function OnLoadFunction() {
 
     // MAIN LOOP
 
-    var FPS = 1     // required framerate
+    var FPS = 60     // required framerate
     var FPS_measured = 0   // measured CHIP8 framerate
     var FPS_measured_show = 0   // measured CHIP8 framerate
     var FPScurrent_show = 0
@@ -67,6 +67,8 @@ function OnLoadFunction() {
     var elapsed_for_loops_per_FPS = 0
     var loop_monitor = 0
     var time_passed = 0
+
+
 
     function MainLoop() {
 
@@ -153,9 +155,35 @@ function OnLoadFunction() {
     }
 
 
-    //then = Date.now();
-    var lastTime = performance.now();
-    var loop = requestAnimationFrame( MainLoop ) ;
+    var lastTime
+    var loop
+    let waitingTimer  
+
+    let checkROMLoaded = new Promise( function(resolve, reject) {
+      
+        waitingTimer = setInterval(()=>{
+            console.log('WAITING FOR ROM', CHIP8.ROMloaded) 
+            if(CHIP8.ROMloaded) {
+                clearInterval( waitingTimer)
+                resolve('RESOLVE: ROM LOADED')
+            }
+            else reject('REJECT: WAITING FOR ROM...');
+            
+        }, 1000);
+
+    })
+
+
+    
+    checkROMLoaded.then((msg)=>{
+        console.log(`${msg} : START the LOOP`);
+        lastTime = performance.now();
+        loop = requestAnimationFrame( MainLoop ) 
+    })
+
+    
+   
+
 
 
     

@@ -392,11 +392,14 @@ export class Chip8CPU{
     
 
 
+
+
     ROMload(filename){
         add_to_Vlog('ROM Load: ' + filename);
 
         this.PC = 0x200
         let program_offset = this.PC
+        this.ROMloaded = false
 
 
         //window.cancelAnimationFrame(loop);
@@ -410,6 +413,9 @@ export class Chip8CPU{
             })
             .then( response => response.arrayBuffer())
             .then( buffer => {
+                
+                this.ROMloaded = filename
+                
                 //console.log(buffer.byteLength);
                 const program = new Uint8Array(buffer);
 
@@ -445,9 +451,11 @@ export class Chip8CPU{
                     add_to_Vlog("RAM vs ROM: NOT EQUAL");
 
 
+
+                // VISUALIZE CHIP8 memory
                 if(this.chip8_HTMLmonitor)    
                 {
-                    // VISUALIZE CHIP8 memory    
+                        
                     let HTML_CHIP8_Monitor = ''
                     for (let k=0; k<this.memory.length-0;k++)    
                         {
@@ -457,14 +465,18 @@ export class Chip8CPU{
                     document.getElementById("chip8_monitor").innerHTML = HTML_CHIP8_Monitor                       
                 }
 
+
+
+
   
             })
             .catch(function (error) {
                 console.log('ROM FETCH PROBLEM: \n', error);
+
             });
     
     
-            this.ROMloaded = filename
+            
 
 
   
@@ -472,7 +484,22 @@ export class Chip8CPU{
 
     }
 
+
+
+    createProgramListing(program){
+
+
+    }
     
+
+
+
+
+
+
+
+
+
     
     
     RUNcycle(){
