@@ -249,7 +249,7 @@ export class Chip8CPU{
         this.memory[i] = fontset[i];
     }
 
-        add_to_Vlog('FONTS LOAD at 0x000');
+        add_to_Vlog('FONTS LOAD @ 0x000');
         //add_to_Vlog(`FONT codes<BR>${listArrayAsHEX(this.memory, 5)}`);
         
         //console.log(hex_dec('fontset.length', fontset.length))
@@ -287,6 +287,103 @@ export class Chip8CPU{
     this.chip8_HTMLmonitor = true
 
     add_to_Vlog('chip8CPU REGISTERS ALL SET<BR>')
+
+
+    // OPCODE LOOKUP TABLE
+
+    this.opcode_lookup = {
+                              
+        0x0000 : ()=>this.op_CLS_RET_RCA_1802() ,      // 0 based opcodes for Clear screen, RTS and Calls RCA 1802 program at address NNN. Not necessary for most ROMs.                                
+        0x00E0 : ()=>this.op_CLS() ,                   // Clear VRAM
+        0x00EE : ()=>this.op_RTS() ,                   // Return From Subroutine
+        
+        0x1000 : ()=>this.op_JMP() ,                   // 1nnn JMP to nnn
+        0x2000 : ()=>this.op_SUB(),                   // 2nnn call SUBroutine at nnn. STORE STACK[++SP] = PC & PC = nn
+        
+        0x3000 : ()=>this.op_SE_vx_nn() ,              // 3Xnn SKIP next if VX == nn
+        0x4000 : ()=>this.op_SNE_vx_nn() ,             // 4Xnn SKIP next if VX != nn
+        
+        0x5000 : ()=>this.op_SE_vx_vy() ,              // 5Xnn SKIP next if VX == VY
+        
+        0x6000 : ()=>this.op_LD_vx_nn() ,              // 6Xnn    to VX load nn
+        0x7000 : ()=>this.op_ADD_vx_nn() ,             // 7Xnn    to VX add nn
+        
+        0x8000 : ()=>this.op_LD_vx_vy() ,              // 8XY0    to VX load VY
+        
+        0x8001 : ()=>this.op_LD_vx_vx_or_vy() ,        // 8XY1    to VX load (VX or | VY)
+        0x8002 : ()=>this.op_LD_vx_vx_and_vy() ,       // 8XY2    to VX load (VX and & VY)
+        0x8003 : ()=>this.op_LD_vx_vx_xor_vy() ,       // 8XY3    to VX load (VX xor ^ VY)
+        0x8004 : ()=>this.op_LD_vx_vx_add_vy() ,       // 8XY4    to VX add VY - if Carry , set  vF to 1, else 0
+        0x8005 : ()=>this.op_LD_vx_vx_sub_vy() ,       // 8XY5    to VX sub VY - VF is set to 0 when there's a borrow, and 1 when there isn't
+        0x8006 : ()=>this.op_SHR_vx() ,                // 8XY6    shift VX right by 1.     VF is set to value of  
+                                                //         least significant bit of VX before the shift
+        
+        0x8007 : ()=>this.op_SUBn_vx_vy() ,            // 8XY7    set VX to VY minus VX. 
+                                                //         VF is set to 0 when there's a borrow, and 1 when there isn't.                    
+        
+        0x800E : ()=>this.op_SHL_vx() ,                // 8XYE    Shifts VX left by one. 
+                                                //         VF is set to the value of the most significant bit of VX before the shift.
+        
+        0x9000 : ()=>this.op_SNE_vx_vy() ,             // 9XY0    skips next instruction if VX != VY
+        
+        
+        0xA000 : ()=>this.op_LOAD_I_nnn(),             // Annn    ld I, nnn  - Annn - Sets I to the address nnn
+        
+        0xB000 : ()=>this.op_JP_v0_nnn(),              // Bnnn    JUMP to nnn + V0
+        
+        0xC000 :  ()=>this.op_RND_vx_nn(),              // CXnn    VX = result of '&' on random number and NN
+        
+        
+        0xD000 :  ()=>this.op_D_XYN() ,                  // Dxyn    DRAW
+
+        0xE09E :  ()=>this.op_SKP_vx() ,                  // Ex9E    skip next instruction if key stored in VX is pressed
+        0xE0A1 :  ()=>this.op_SKNP_vx() ,                 // ExA1    skip next instruction if key stored in VX is NOT pressed
+        
+        
+        0xF007 :  ()=>this.op_LD_VX_dt() ,               // Fx07     VX =  this.time    
+        
+        0xF00A :  ()=>this.op_LD_VX_n() ,                // Fx0A    Wait for a key press, store the value of the key in Vx.
+                                                 //         All execution stops until a key is pressed, 
+                                                 //         then the value of that key is stored in Vx
+        
+        0xF015 :  ()=>this.op_LD_dt_VX() ,               // Fx15      this.time = VX    - delay timer set to VX
+        0xF018 :  ()=>this.op_LD_st_VX() ,               // Fx18      this.tune = VX    - sound timer set to VX
+        0xF01E :  ()=>this.op_ADD_i_VX() ,               // Fx1E     to I add VX
+        
+        
+        0xF029 :  ()=>this.op_LD_f_VX() ,               // Fx29      Set I = location of sprite for digit Vx
+                                                //             The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx
+        0xF033 :  ()=>this.op_LD_b_VX() ,               // Fx33      store BCD representation of Vx in memory locations I, I+1, and I+2
+                                                //               The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, 
+                                                //               the tens digit at location I+1, 
+                                                //               and the ones digit at location I+2
+        
+        0xF055 :  ()=>this.op_LD_i_VX() ,               // Fx55        put registers V0 - Vx in memory at location I >
+                                                
+                                                // Fx65        Fills V0 to VX (including VX) with values from memory starting at address I
+                                                //             fill V0 to VX with contents of mem[I]+
+    
+        0xF065 :  ()=>this.op_LD_VX_i() 
+        
+                                     
+        }
+        
+
+
+        // | biBwise OR
+        this.switchLookUp = {
+            0x0000: () => { // add_to_Vlog( `SUB 0x0000 ${this.opcode.toString(16)}`);      // TEST
+                            return (0x0000 | this.opcode & 0xF0FF) } ,
+            0x8000: () => { return (0x8000 | this.opcode & 0xF00F) } ,
+            0xE000: () => { return (0xE000 | this.opcode & 0xF0FF) } ,
+            0xF000: () => { return (0xF000 | this.opcode & 0xF0FF) } 
+            
+            // 0x0000: () => { 0x0000 | this.opcode & 0xF0FF },  
+            // 0x8000: () => { 0x8000 | this.opcode & 0xF00F },  
+            // 0xE000: () => { 0xE000 | this.opcode & 0xF0FF },  
+            // 0xF000: () => { 0xF000 | this.opcode & 0xF0FF } 
+        }
+
 
         
 
@@ -354,7 +451,7 @@ export class Chip8CPU{
                     let HTML_CHIP8_Monitor = ''
                     for (let k=0; k<this.memory.length-0;k++)    
                         {
-                        HTML_CHIP8_Monitor += `<div class="ch8MonCell" id="ch8MonCell-${k}">${this.memory[k].toString(16).toUpperCase()}</div>`
+                        HTML_CHIP8_Monitor += `<div class="ch8MonCell" id="ch8MonCell-${k}" title="${hex_dec('ADDR',k)}">${this.memory[k].toString(16).toUpperCase()}</div>`
                         }
 
                     document.getElementById("chip8_monitor").innerHTML = HTML_CHIP8_Monitor                       
@@ -453,83 +550,7 @@ export class Chip8CPU{
         // if CONSOLE_DEBUG_MSG:
         //     print (' PC:' + str(hex(this.PC)),) 
 
-        this.opcode_lookup = {
-                              
-        0x0000 : ()=>this.op_CLS_RET_RCA_1802() ,      // 0 based opcodes for Clear screen, RTS and Calls RCA 1802 program at address NNN. Not necessary for most ROMs.                                
-        0x00E0 : ()=>this.op_CLS() ,                   // Clear VRAM
-        0x00EE : ()=>this.op_RTS() ,                   // Return From Subroutine
-        
-        0x1000 : ()=>this.op_JMP() ,                   // 1nnn JMP to nnn
-        0x2000 : ()=>this.op_SUB(),                   // 2nnn call SUBroutine at nnn. STORE STACK[++SP] = PC & PC = nn
-        
-        0x3000 : ()=>this.op_SE_vx_nn() ,              // 3Xnn SKIP next if VX == nn
-        0x4000 : ()=>this.op_SNE_vx_nn() ,             // 4Xnn SKIP next if VX != nn
-        
-        0x5000 : ()=>this.op_SE_vx_vy() ,              // 5Xnn SKIP next if VX == VY
-        
-        0x6000 : ()=>this.op_LD_vx_nn() ,              // 6Xnn    to VX load nn
-        0x7000 : ()=>this.op_ADD_vx_nn() ,             // 7Xnn    to VX add nn
-        
-        0x8000 : ()=>this.op_LD_vx_vy() ,              // 8XY0    to VX load VY
-        
-        0x8001 : ()=>this.op_LD_vx_vx_or_vy() ,        // 8XY1    to VX load (VX or | VY)
-        0x8002 : ()=>this.op_LD_vx_vx_and_vy() ,       // 8XY2    to VX load (VX and & VY)
-        0x8003 : ()=>this.op_LD_vx_vx_xor_vy() ,       // 8XY3    to VX load (VX xor ^ VY)
-        0x8004 : ()=>this.op_LD_vx_vx_add_vy() ,       // 8XY4    to VX add VY - if Carry , set  vF to 1, else 0
-        0x8005 : ()=>this.op_LD_vx_vx_sub_vy() ,       // 8XY5    to VX sub VY - VF is set to 0 when there's a borrow, and 1 when there isn't
-        0x8006 : ()=>this.op_SHR_vx() ,                // 8XY6    shift VX right by 1.     VF is set to value of  
-                                                //         least significant bit of VX before the shift
-        
-        0x8007 : ()=>this.op_SUBn_vx_vy() ,            // 8XY7    set VX to VY minus VX. 
-                                                //         VF is set to 0 when there's a borrow, and 1 when there isn't.                    
-        
-        0x800E : ()=>this.op_SHL_vx() ,                // 8XYE    Shifts VX left by one. 
-                                                //         VF is set to the value of the most significant bit of VX before the shift.
-        
-        0x9000 : ()=>this.op_SNE_vx_vy() ,             // 9XY0    skips next instruction if VX != VY
-        
-        
-        0xA000 : ()=>this.op_LOAD_I_nnn(),             // Annn    ld I, nnn  - Annn - Sets I to the address nnn
-        
-        0xB000 : ()=>this.op_JP_v0_nnn(),              // Bnnn    JUMP to nnn + V0
-        
-        0xC000 :  ()=>this.op_RND_vx_nn(),              // CXnn    VX = result of '&' on random number and NN
-        
-        
-        0xD000 :  ()=>this.op_D_XYN() ,                  // Dxyn    DRAW
-
-        0xE09E :  ()=>this.op_SKP_vx() ,                  // Ex9E    skip next instruction if key stored in VX is pressed
-        0xE0A1 :  ()=>this.op_SKNP_vx() ,                 // ExA1    skip next instruction if key stored in VX is NOT pressed
-        
-        
-        0xF007 :  ()=>this.op_LD_VX_dt() ,               // Fx07     VX =  this.time    
-        
-        0xF00A :  ()=>this.op_LD_VX_n() ,                // Fx0A    Wait for a key press, store the value of the key in Vx.
-                                                 //         All execution stops until a key is pressed, 
-                                                 //         then the value of that key is stored in Vx
-        
-        0xF015 :  ()=>this.op_LD_dt_VX() ,               // Fx15      this.time = VX    - delay timer set to VX
-        0xF018 :  ()=>this.op_LD_st_VX() ,               // Fx18      this.tune = VX    - sound timer set to VX
-        0xF01E :  ()=>this.op_ADD_i_VX() ,               // Fx1E     to I add VX
-        
-        
-        0xF029 :  ()=>this.op_LD_f_VX() ,               // Fx29      Set I = location of sprite for digit Vx
-                                                //             The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx
-        0xF033 :  ()=>this.op_LD_b_VX() ,               // Fx33      store BCD representation of Vx in memory locations I, I+1, and I+2
-                                                //               The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, 
-                                                //               the tens digit at location I+1, 
-                                                //               and the ones digit at location I+2
-        
-        0xF055 :  ()=>this.op_LD_i_VX() ,               // Fx55        put registers V0 - Vx in memory at location I >
-                                                
-                                                // Fx65        Fills V0 to VX (including VX) with values from memory starting at address I
-                                                //             fill V0 to VX with contents of mem[I]+
-    
-        0xF065 :  ()=>this.op_LD_VX_i() 
-        
-                                     
-        }
-        
+       
         
         
 
@@ -540,25 +561,13 @@ export class Chip8CPU{
             //op_test = 0x00E0 & 0xF000  // TEST
         
 
-        // | biBwise OR
-        let switchLookUp = {
-            0x0000: () => { // add_to_Vlog( `SUB 0x0000 ${this.opcode.toString(16)}`);      // TEST
-                            return (0x0000 | this.opcode & 0xF0FF) } ,
-            0x8000: () => { return (0x8000 | this.opcode & 0xF00F) } ,
-            0xE000: () => { return (0xE000 | this.opcode & 0xF0FF) } ,
-            0xF000: () => { return (0xF000 | this.opcode & 0xF0FF) } 
-            
-            // 0x0000: () => { 0x0000 | this.opcode & 0xF0FF },  
-            // 0x8000: () => { 0x8000 | this.opcode & 0xF00F },  
-            // 0xE000: () => { 0xE000 | this.opcode & 0xF0FF },  
-            // 0xF000: () => { 0xF000 | this.opcode & 0xF0FF } 
-        }
+      
         
         let lookup
 
-        if (op_test in switchLookUp)
+        if (op_test in this.switchLookUp)
             {
-            lookup = switchLookUp[ op_test ]()
+            lookup = this.switchLookUp[ op_test ]()
                // add_to_Vlog( `MAIN OPC: ${this.opcode.toString(16)}`)
             }
         else   // found direct opcode, no need for switching

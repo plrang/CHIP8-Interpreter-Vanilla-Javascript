@@ -27,6 +27,16 @@
         grid-column-gap: 2px;
         grid-row-gap: 2px;
         grid-template-columns: repeat(32, 18px);
+        
+        height:20em;
+        
+        /* BAR Works on Firefox */
+        
+        scrollbar-width: thin;
+        scrollbar-color: red green;
+        overflow:scroll;
+        cursor:pointer;
+
     }       
 
     .ch8MonCell, .ch8MonCell-active{ 
@@ -61,11 +71,11 @@
     <main>
         
         <div id="chip8_program_listing">
-            CHIP8 Loaded Program Listing Display
+            IDLE: CHIP8 Loaded Program Listing Display
         </div>
 
         <div id="chip8_monitor">
-         CHIP8 Visual Monitor
+         IDLE: CHIP8 Visual Monitor
         </div>
         
         <div class="console">
@@ -78,10 +88,10 @@
 
         <div id="status_display">
             <div id="Vstatus_field">
-                IDLE...
+                STATUS IDLE...
             </div>
             <div id="Vlog_field">
-                IDLE...
+                LOG IDLE...
             </div>
         </div>
 

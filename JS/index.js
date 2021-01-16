@@ -21,29 +21,28 @@ function OnLoadFunction() {
     const CHIP8 = new Chip8CPU(keyboard, FONTSET, CHIP8_Screen)  // Initialize
     
    
-
-    const ROM_dir = "./ROMs/"
-    //const ROM_filename = "Chip8Picture.ch8"
-    //const ROM_filename = "Clock.ch8"
-    //const ROM_filename = "BC_test.ch8"
-    const ROM_filename = "random_number_test.ch8"
-
-    //const ROM_filename = "Tetris.ch8"
-    //const ROM_filename = "Maze.ch8"
-    //const ROM_filename = "Breakout.ch8"
     
-    //const ROM_filename = "Invaders.ch8"
-    //const ROM_filename = "Airplane.ch8"
-    //const ROM_filename = "Blinky.ch8"
-    //const ROM_filename = "Brix.ch8"
-    //const ROM_filename = "DelayTimerTest.ch8"
-    //const ROM_filename = "Life.ch8"
-    //const ROM_filename = "Sierpinski.ch8"
-    //const ROM_filename = "Stars.ch8"
-    //const ROM_filename = "Trip8.ch8"
-    //const ROM_filename = "UFO.ch8"
-    
-    //const ROM_filename = "IBMLogo.ch8"
+    let ROM_dir = "./ROMs/"
+    let ROM_filename
+    // ROM_filename = "Chip8Picture.ch8"
+    // ROM_filename = "Clock.ch8"
+    // ROM_filename = "BC_test.ch8"
+    // ROM_filename = "random_number_test.ch8"
+
+    // ROM_filename = "Tetris.ch8"
+    // ROM_filename = "Maze.ch8"
+    // ROM_filename = "Breakout.ch8"
+    // ROM_filename = "Invaders.ch8"
+    // ROM_filename = "Airplane.ch8"
+    // ROM_filename = "Blinky.ch8"
+    // ROM_filename = "Brix.ch8"
+    // ROM_filename = "DelayTimerTest.ch8"
+    // ROM_filename = "Life.ch8"
+    // ROM_filename = "Sierpinski.ch8"
+     ROM_filename = "Stars.ch8"
+    //ROM_filename = "Trip8.ch8"
+    // ROM_filename = "UFO.ch8"
+    //ROM_filename = "IBMLogo.ch8"
 
     CHIP8.ROMload( ROM_dir + ROM_filename )
 
@@ -83,7 +82,7 @@ function OnLoadFunction() {
         let elapsed = now - lastTime;
         deltaTime = elapsed/1000
 
-        add_to_Vstatus(`<BR>Elapsed time: ${elapsed} Delta time: ${deltaTime} time_passed: ${time_passed} <BR>`);
+        add_to_Vstatus(`<BR>Elapsed time: ${elapsed} Delta: ${deltaTime} Passed: ${time_passed} <BR>`);
 
         FPScurrent = 1/ deltaTime
         
@@ -124,12 +123,12 @@ function OnLoadFunction() {
             + ' Loop: ' + loop_monitor 
             + ' FPS interval: ' 
             + fpsInterval + ' FPS HW current: ' + FPScurrent_show
-            + "<BR>Measured FPS: " + FPS_measured_show
+            + "<BR>Real / set FPS: " + FPS_measured_show
             + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
             + '<BR><BR>CHIP STATE'
             + '<BR>SP: ' + CHIP8.SP
             + '<BR>PC: ' + CHIP8.PC
-            + '<BR>OPC: ' + CHIP8.opcode.toString(16)
+            + '<BR>OPC: ' + hex_dec('', CHIP8.opcode)
             + '<BR>I: ' + CHIP8.I
             + '<BR>STACK: ' + CHIP8.stack
             + '<BR>V: ' + CHIP8.V
