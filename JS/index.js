@@ -1,12 +1,12 @@
 
 import {Keyboard, Display_Screen, Chip8CPU, FONTSET} from './chip8CPUmod.js';
-import {add_to_Vlog, add_to_Vstatus, clear_Vlog, clear_Vstatus, hex_dec} from './base-utils.js';
+import {add_to_Vlog, add_to_Vstatus, clear_Vlog, clear_Vstatus, hex_dec, interfaceShow} from './base-utils.js';
 
 //console.log('ENTERING JS')
 clear_Vlog()
 add_to_Vlog('<BR>ENTERING JS')
 
-
+aaa
 
 
 function OnLoadFunction() {
@@ -24,25 +24,53 @@ function OnLoadFunction() {
     
     let ROM_dir = "./ROMs/"
     let ROM_filename
+    
     // ROM_filename = "Chip8Picture.ch8"
-    // ROM_filename = "Clock.ch8"
-    // ROM_filename = "BC_test.ch8"
-    // ROM_filename = "random_number_test.ch8"
-
-    // ROM_filename = "Tetris.ch8"
-    // ROM_filename = "Maze.ch8"
-    // ROM_filename = "Breakout.ch8"
-    // ROM_filename = "Invaders.ch8"
-    // ROM_filename = "Airplane.ch8"
-    // ROM_filename = "Blinky.ch8"
-    // ROM_filename = "Brix.ch8"
-    // ROM_filename = "DelayTimerTest.ch8"
-    // ROM_filename = "Life.ch8"
-    // ROM_filename = "Sierpinski.ch8"
-     ROM_filename = "Stars.ch8"
-    //ROM_filename = "Trip8.ch8"
-    // ROM_filename = "UFO.ch8"
     //ROM_filename = "IBMLogo.ch8"
+    ROM_filename = "Maze.ch8"
+    //ROM_filename = "random_number_test.ch8"
+    //ROM_filename = "Breakout.ch8"
+    ROM_filename = "Invaders.ch8"
+    //ROM_filename = "Brix.ch8"
+    //ROM_filename = "ZeroDemo.ch8"       // ok
+     
+    //ROM_filename = "Syzygy.ch8"       // ~
+    
+    //ROM_filename = "Sierpinski.ch8" // ~
+    //ROM_filename = "Airplane.ch8"
+    //ROM_filename = "UFO.ch8"
+    //ROM_filename = "DelayTimerTest.ch8"
+    //ROM_filename = "Life.ch8"
+    //ROM_filename = "Stars.ch8"    
+    //ROM_filename = "ParticleDemo.ch8"  
+    //ROM_filename = "Missile.ch8"       // ok
+
+    //ROM_filename = "LunarLander.ch8"       // ok
+
+
+
+    //ROM_filename = "Paddles.ch8"       
+    
+    //ROM_filename = "Trip8.ch8"
+
+    //ROM_filename = "Clock.ch8"
+    //ROM_filename = "Tetris.ch8"
+    
+    //ROM_filename = "Blinky.ch8"
+    
+    
+    
+    //ROM_filename = "Landing.ch8"       // ~~
+    //ROM_filename = "KeypadTest.ch8"       // good for keypad checking
+    //ROM_filename = "Kaleid.ch8"       // ~
+    //ROM_filename = "AstroDodge.ch8"    
+    //ROM_filename = "AnimalRace.ch8"    
+
+    
+    
+    //ROM_filename = "plrangTest.ch8"
+
+
 
     CHIP8.ROMload( ROM_dir + ROM_filename )
 
@@ -56,6 +84,8 @@ function OnLoadFunction() {
     console.log(hex_dec( 'STARTUP CHIP8.PC state:', CHIP8.PC))
 
 
+   
+
 
     // MAIN LOOP
 
@@ -65,18 +95,16 @@ function OnLoadFunction() {
     var FPScurrent_show = 0
 
     var elapsed_for_loops_per_FPS = 0
-    var loop_monitor = 0
+    
     var time_passed = 0
 
-
+    var deltaTime, FPScurrent
 
     function MainLoop() {
+       
 
-        let fpsInterval, deltaTime, FPScurrent; 
-
-        clear_Vstatus();
-
-        fpsInterval = 1000/FPS
+        if(interfaceShow.Vstatus)
+            clear_Vstatus();
 
         // now = Date.now();        // deprec.
         let now = performance.now();
@@ -84,72 +112,72 @@ function OnLoadFunction() {
         let elapsed = now - lastTime;
         deltaTime = elapsed/1000
 
-        add_to_Vstatus(`<BR>Elapsed time: ${elapsed} Delta: ${deltaTime} Passed: ${time_passed} <BR>`);
+        if(interfaceShow.Vstatus)
+            add_to_Vstatus(`<BR>Elapsed time: ${elapsed} Delta: ${deltaTime} Passed: ${time_passed} <BR>`);
 
         FPScurrent = 1/ deltaTime
         
         time_passed += deltaTime;
         // CPU TICK
 
+
+        
+        CHIP8.RUNcycle()
+        CHIP8.screen.draw()
+
+
        
+        // && CHIP8.cycle_num < 200
+         if(time_passed > 1/FPS ){
 
-        if(time_passed > 1/FPS){
-        //if(elapsed > fpsInterval){
-            CHIP8.RUNcycle()
-
-            loop_monitor++;
             time_passed = 0;
             FPS_measured = Math.round(1/elapsed_for_loops_per_FPS*1000);
-            
             elapsed_for_loops_per_FPS = 0;
-
-
         }
 
         elapsed_for_loops_per_FPS += elapsed;    
-       
 
-        if(loop_monitor%20==19)
-            {
-            FPScurrent_show = Math.round(FPScurrent);
-            FPS_measured_show = FPS_measured;
-            }
+        if(interfaceShow.Vstatus)
+            if(CHIP8.cycle_num%20==19)
+                {
+                FPScurrent_show = Math.round(FPScurrent);
+                FPS_measured_show = FPS_measured;
+                }
 
         lastTime = now;
         
         
-        
+        if(interfaceShow.Vstatus)        
+            add_to_Vstatus(
+                lastTime 
+                + ' CPU cycle: ' + CHIP8.cycle_num
+                + ' FPS interval: ' 
+                + ' FPS HW current: ' + FPScurrent_show
+                + "<BR>Real / set FPS: " + FPS_measured_show
+                + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
+                + '<BR><BR>CHIP STATE'
+                + '<BR>SP: ' + CHIP8.SP
+                + '<BR>PC: ' + hex_dec('', CHIP8.PC)
+                + '<BR>OPC: ' + hex_dec('', CHIP8.opcode)
+                + '<BR>I: ' + hex_dec('', CHIP8.I)
+                + '<BR>STACK: ' + CHIP8.stack
+                + '<BR>V: ' + CHIP8.V
+                + '<BR>DTime: ' + CHIP8.time
+                + '<BR>DTone: ' + CHIP8.tone
+                + '<BR>Draw Flag: ' + CHIP8.draw_flag
+                + '<BR>VRAM: ' + CHIP8.screen.VRAM
+                + '<BR>RND: ' + Math.floor(Math.random() * 0xFF)
+                + '<BR>CHIP PAUSED: ' + CHIP8.paused
 
-        add_to_Vstatus(
-            lastTime 
-            + ' Loop: ' + loop_monitor 
-            + ' FPS interval: ' 
-            + fpsInterval + ' FPS HW current: ' + FPScurrent_show
-            + "<BR>Real / set FPS: " + FPS_measured_show
-            + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
-            + '<BR><BR>CHIP STATE'
-            + '<BR>SP: ' + CHIP8.SP
-            + '<BR>PC: ' + CHIP8.PC
-            + '<BR>OPC: ' + hex_dec('', CHIP8.opcode)
-            + '<BR>I: ' + CHIP8.I
-            + '<BR>STACK: ' + CHIP8.stack
-            + '<BR>V: ' + CHIP8.V
-            + '<BR>DTime: ' + CHIP8.time
-            + '<BR>DTone: ' + CHIP8.tone
-            + '<BR>Draw Flag: ' + CHIP8.draw_flag
-            + '<BR>VRAM:' + CHIP8.screen.VRAM
-            + '<BR>RND:' + Math.floor(Math.random() * 0xFF)
-            
-        );
+                
+            );
 
-        if(loop_monitor%300==299)
-            clear_Vlog()
+        if(interfaceShow.Vlog)                
+            if(CHIP8.cycle_num%1300==1299)
+                clear_Vlog()
 
         loop = requestAnimationFrame( MainLoop );
     
-        
-
-
 
 
     }

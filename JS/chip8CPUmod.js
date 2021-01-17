@@ -1,5 +1,6 @@
 
-import {add_to_Vlog, add_to_Vstatus, clear_Vlog, arrays_equal, listArrayAsHEX, hex_dec} from './base-utils.js';
+
+import {add_to_Vlog, add_to_Vstatus, clear_Vlog, arrays_equal, listArrayAsHEX, hex_dec, toHex, interfaceShow} from './base-utils.js';
 
 
 
@@ -125,15 +126,19 @@ export class Keyboard {
     onKeyDown(event) {
 
         let key = this.KEY_MAP[event.key +'-' +event.location];    //event.which - deprec.
+
         this.keydown = key
         this.keysPressed[key] = 1;
 
-        add_to_Vlog( 'E.KEY: ' + event.key + ' ' + event.location );    // location 3 means NUMPAD
+        //console.log( 'E.KEY: ' + event.key + ' ' + event.location );    // location 3 means NUMPAD
         
         //add_to_Vlog( 'KEY PRESS: ' + key );
         //add_to_Vlog( 'KEY PRESS: ' + event.which );
     
         // Make sure onNextKeyPress is initialized and the pressed key is actually mapped to a Chip-8 key
+
+        //console.log("onKeyDown: key= ", key)
+
         if (this.onNextKeyPress !== null && key) {
             this.onNextKeyPress(parseInt(key));
             this.onNextKeyPress = null;
@@ -180,17 +185,22 @@ export class Display_Screen{
     draw() {
         //this.canvasCtx.fillStyle = CLS_BG;
         //this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.fill(CLS_BG)
-
+        //this.fill(CLS_BG)
+        
         for(let i=0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; i++) {
             let x = (i % DISPLAY_WIDTH) * SCREEN_SCALE;
             let y = Math.floor(i / DISPLAY_WIDTH) * SCREEN_SCALE;
 
-            if(this.VRAM[i] == 1) {
+            if(this.VRAM[i] == 1) 
+            {
                 this.canvasCtx.fillStyle = '#F0F';
-                this.canvasCtx.fillRect(x, y, SCREEN_SCALE, SCREEN_SCALE);
+                
             }
+            else this.canvasCtx.fillStyle = '#000';
+            this.canvasCtx.fillRect(x, y, SCREEN_SCALE, SCREEN_SCALE);
         }
+
+
     }
 
     setPixel(x, y) {
@@ -256,20 +266,16 @@ export class Chip8CPU{
         //console.log(this.memory)
 
 
-    this.SP = 0;
-    this.stack = new Uint8Array(REGISTERS_NUM).fill(0);
+    this.SP = 0
+    this.stack = new Uint16Array(STACK_SIZE).fill(0);
     
-
-    this.opcode = 0;
-    
+    this.opcode = 0
     this.opc_mnemo = ''                 
-    //this.opcode_asm = ['']*6       
                        
     this.PC = 0x200                                 // program counter
-
     
     this.I = 0                                      // pointer register
-    this.V = new Uint8Array(STACK_SIZE).fill(0)
+    this.V = new Uint8Array(REGISTERS_NUM).fill(0)
     
     // TIMERS
     
@@ -283,8 +289,9 @@ export class Chip8CPU{
     this.ROMloaded = ''
     this.cycle_num = 0
     this.PC_prev = this.PC
-
-    this.chip8_HTMLmonitor = true
+    this.I_prev = this.I
+    this.paused = false
+    
 
     add_to_Vlog('chip8CPU REGISTERS ALL SET<BR>')
 
@@ -377,20 +384,8 @@ export class Chip8CPU{
             0x8000: () => { return (0x8000 | this.opcode & 0xF00F) } ,
             0xE000: () => { return (0xE000 | this.opcode & 0xF0FF) } ,
             0xF000: () => { return (0xF000 | this.opcode & 0xF0FF) } 
-            
-            // 0x0000: () => { 0x0000 | this.opcode & 0xF0FF },  
-            // 0x8000: () => { 0x8000 | this.opcode & 0xF00F },  
-            // 0xE000: () => { 0xE000 | this.opcode & 0xF0FF },  
-            // 0xF000: () => { 0xF000 | this.opcode & 0xF0FF } 
         }
-
-
-        
-
-
     }
-    
-
 
 
 
@@ -400,7 +395,6 @@ export class Chip8CPU{
         this.PC = 0x200
         let program_offset = this.PC
         this.ROMloaded = false
-
 
         //window.cancelAnimationFrame(loop);
 
@@ -453,7 +447,7 @@ export class Chip8CPU{
 
 
                 // VISUALIZE CHIP8 memory
-                if(this.chip8_HTMLmonitor)    
+                if(interfaceShow.Monitor)    
                 {
                         
                     let HTML_CHIP8_Monitor = ''
@@ -466,7 +460,7 @@ export class Chip8CPU{
                 }
 
 
-
+            this.createProgramListing(program)
 
   
             })
@@ -488,28 +482,53 @@ export class Chip8CPU{
 
     createProgramListing(program){
 
+        if(!interfaceShow.ProgramListing) return
 
+        let HTML_CHIP8_Listing = `<B>PROGRAM LISTING</B><BR>`
+        let lookup, opcode, op_test
+            
+        for (let k=0; k < program.length; k+=2)    
+            {
+            
+            //this.opcode = ( this.memory[ this.PC ] << 8 ) | this.memory[ this.PC + 1 ]
+            opcode = ( program[k] << 8 ) | program[k+1]
+            op_test = opcode & 0xF000
+            
+               if (op_test in this.switchLookUp)
+                {
+                lookup = this.switchLookUp[ op_test ]()
+                  
+                }
+            else   // found direct opcode, no need for switching
+                {
+                lookup = opcode & 0xF000
+                  
+    
+                }
+        
+            //HTML_CHIP8_Listing += `<div class="ch8MonCell" id="ch8MonCell-${k}" title="${hex_dec('ADDR',k)}">${this.memory[k].toString(16).toUpperCase()}</div>`
+            //HTML_CHIP8_Listing += toHex(program[k]) + toHex(program[k+1]) + '<BR>'
+            //HTML_CHIP8_Listing += toHex(opcode) + '<BR>'
+            let lineNumber = k
+            HTML_CHIP8_Listing += `${lineNumber} - ${toHex(opcode)} - ` + this.opcode_lookup[ lookup ] + '<BR>'
+
+            }
+            
+        document.getElementById("chip8_program_listing").innerHTML = HTML_CHIP8_Listing
     }
     
 
 
 
-
-
-
-
-
-
-    
     
     RUNcycle(){
-        this.cycle_num += 1     //just for us
 
         // Decode & Execute
-        let asm = this.OPCdecode()
+        this.OPCdecode()
 
         // TIMERS update
             
+
         if (this.tone > 0)
             {
             add_to_Vlog('SOUND');
@@ -519,44 +538,54 @@ export class Chip8CPU{
             
         if (this.time > 0)
             this.time -= 1     
-
-        this.PC += 2    
+    
+            
+        this.cycle_num += 1     //just for us
+        //this.PC += 2
 
     }
 
-
-
-    
+   
 
     // OPCODEs DECODE & EXECUTE
         
     OPCdecode() {
-        // // OPCODE Load
-        // //     merge both bytes and store them in an unsigned short (2 bytes datatype) 
-        // //     then use the bitwise OR operation
+
         
         let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
-
-        if(this.chip8_HTMLmonitor)
+        
+        if (interfaceShow.Monitor)
         {
-        
+            
+            
 
-        if(typeof(cell_active) != 'undefined' && cell_active != null)
-            {
-            cell_active.setAttribute("style", "background-color:#000;color:white; border: 1px solid red;font-weight:normal")
-            cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
-            cell_active.setAttribute("style", "background-color:#000;color:white; border: 1px solid red;font-weight:normal")
+            if(typeof(cell_active) != 'undefined' && cell_active != null)
+                {
+                
+                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
+                cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
+                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
+                
+                if(this.cycle_num==0)   // mark the first cycle in Monitor
+                    {   
+                    cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
+                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
+                    cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
+                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
+                    //console.log("CYCLE 0", this.PC)
+                    }
+
+
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I_prev}`)
+                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
+                cell_active = document.getElementById(`ch8MonCell-${this.I_prev+1}`)
+                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
+
             }
-      }
+        
+    }
     
-        // cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
-        // cell_active.setAttribute("style", "background-color:#0F0;color:#000; border: 1px solid blue;font-weight:bold")
-    
-        // cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
-        // cell_active.setAttribute("style", "background-color:#0F0;color:#000; border: 1px solid blue;font-weight:bold")
-        
-        
-        
         
         //// EXTRACT operands and data    http://devernay.free.fr/hacks/chip8/C8TECH10.HTM//1.0
         
@@ -564,7 +593,6 @@ export class Chip8CPU{
         
         // // weird BISQWIT code 
         // //this.opcode = this.memory[ this.PC & 0xFFF ] *0x100 + this.memory[ (this.PC + 1) & 0xFFF ]
-        
 
         this.X = ((this.opcode & 0x0F00) >> 8) & 0xF                // // move it right to fit the V index
         this.Y = ((this.opcode & 0x00F0) >> 4) & 0xF
@@ -572,24 +600,10 @@ export class Chip8CPU{
         this.nn = this.opcode & 0x00FF
         this.nnn = this.opcode & 0x0FFF  
 
-        
-        
-        // if CONSOLE_DEBUG_MSG:
-        //     print (' PC:' + str(hex(this.PC)),) 
 
-       
-        
-        
-
-            //this.opcode = 0x00E0       // TEST
+        //this.opcode = 0x00E0       // TEST
         
         let op_test = this.opcode & 0xF000
-        
-            //op_test = 0x00E0 & 0xF000  // TEST
-        
-
-      
-        
         let lookup
 
         if (op_test in this.switchLookUp)
@@ -603,146 +617,94 @@ export class Chip8CPU{
                // add_to_Vlog(`SUB OPC: <B>${this.opcode.toString(16)}</b>`)
 
             }
-
-        
-    //add_to_Vlog( `LOOKUP OPCODE: ${lookup.toString(16)}`)
-        
-    //console.log(this.opcode_lookup[ lookup ]())
         
     try{
 
         add_to_Vlog(  `<span class="hard-space" style=" white-space: pre">     </span>` +
-        `Try: ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}</b>`)
-                    //add_to_Vlog( `<span class="hard-space" style=" white-space: pre">     </span>TRY: <B>${lookup.toString(16)}             </b> : <B>${opcode_lookup[ lookup ]}</b>`)
-                    //console.log(opcode_lookup[ lookup ])
+        `${this.cycle_num} Try: ${this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}</b>`)
        
-                    this.opcode_lookup[ lookup ]()                // run the choosen method
-                                                 // add 0x for a proper hex format
-       
-        //return str(hex(this.opcode)) + '\t' + this.opc_mnemo
+        this.opcode_lookup[ lookup ]()  // run the choosen method
+
     }
     catch (error)
         {
         add_to_Vlog( `OPC lookup error: ${lookup.toString(16)}, ${error}`)
-                    //return str(hex(this.opcode)) + ' Look up error' 
         }
         
 
-     
-   
-
-
-
-
-
-
-     
-
-    // let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
-    // cell_active.setAttribute("style", "background-color:green;color:white; border: 1px solid red;font-weight:normal")
-    // cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
-    // cell_active.setAttribute("style", "background-color:green;color:white; border: 1px solid red;font-weight:normal")
-    if(this.chip8_HTMLmonitor)
+    
+    if (interfaceShow.Monitor)
     {
-        if(typeof(cell_active) != 'undefined' && cell_active != null)
-        {
-            cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
-            cell_active.setAttribute("style", "background-color:#0F0;color:#000; border: 1px solid blue;font-weight:bold")
-
-            cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
-            cell_active.setAttribute("style", "background-color:#0F0;color:#000; border: 1px solid blue;font-weight:bold")
-        }
-    }
         
+        
+            if(typeof(cell_active) != 'undefined' && cell_active != null)
+            {
+                cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
+                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
+
+                cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
+                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
+
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I}`)
+                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I+1}`)
+                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")            
+            }
+        
+            
+    }
     this.PC_prev = this.PC
+    this.I_prev = this.I
 
 
     }   // OPCdecode() {
 
 
 
-
-
-
-
-
-
-    
-
     // # ***************
     // # *** OPCODES ***
     // # ***************
 
     // # 0x0000
-
     op_CLS_RET_RCA_1802()
         {
-                //self.PC = self.nnn
-                //self.opc_mnemo = 'unused RCA 1802 ' + str(hex(self.opcode))
-        //add_to_Vlog( '*** OP: op_CLS_RET_RCA_1802 ***')
-        
+        this.PC += 2
         }
 
     // # 0x00E0                                clear screen
-
     op_CLS() {
-        //clear_Vlog()
-        //add_to_Vlog( 'OP: op_CLS')   
+        this.PC += 2
         console.log( 'OP: op_CLS')   
-        // for (let i = range(len(self.VRAM)))
-        //     self.VRAM[i] = 0
-
-        // TESTing with random color
-        //this.screen.fill( "#333" )  // max / min
-        
         this.screen.clearVRAM()
-        
-
 
     } 
 
     // # 0x00EE                                return from a subroutine
     op_RTS(){
-        this.SP -= 1
-        this.PC = this.stack[this.SP % 12]
+        // this.PC = this.stack[this.SP % 16]
+        this.PC = this.stack[this.SP--%16]
+        //this.SP -= 1
+        this.PC += 2
+        
     } 
 
     // # 0x1nnn                                jump to address NNN
     op_JMP(){
         this.PC = this.nnn
-        this.PC -= 2                        
-   
-        // ?? below
-        // # HAD TO REMOVE one cycle otherwise it jumped too far
-        // # there is a single increment instruction in the main loop
-        // # self.PC += 2
-        // # so there is no need to repeat it in every other procedure
+
+       // this.PC += 2
 
     } 
 
-
     // # 0x2nnn         call a SUBroutine at nnn. STORE STACK[++SP] = PC & PC = nnn
-    // # TODO check for ++self.SP % 12 - at BISKWIT
-    // # increment stack pointer SP + 1 and put there current PC / program counter on the stack
-
+        // # increment stack pointer SP + 1 and put there current PC / program counter on the stack
     op_SUB(){       
-
-
-                    //console.log(`SUB THIS )
-        
-        // add_to_Vlog(`op_SUB() before: Stack: ${this.stack}  PC: ${this.PC}`)
-
-        this.stack[this.SP % 12] = this.PC
-        this.SP += 1
-
+        //this.stack[this.SP % 16] = this.PC
+        //this.SP += 1
+        this.stack[++this.SP%16] = this.PC
         this.PC = this.nnn                      // # new program counter PC
-        this.PC -= 2
-
-        // add_to_Vlog(`op_SUB() after: Stack: ${this.stack}  PC: ${this.PC}`)
-
-                 //add_to_Vlog( `EXECUTE *** op_SUB ***`)
-
-
     }
 
 
@@ -754,14 +716,17 @@ export class Chip8CPU{
 
     op_SE_vx_nn(){
         let X = this.X
+        this.PC += 2
         if (this.nn == this.V[X])
             this.PC += 2
+
     }
 
     // # 4Xnn                                 skip the next instruction if VX != NN
 
     op_SNE_vx_nn(){
         let X = this.X
+        this.PC += 2
         if (this.V[X] != this.nn)
             this.PC += 2
     }
@@ -771,7 +736,7 @@ export class Chip8CPU{
     op_SE_vx_vy(){
         let X = this.X
         let Y = this.Y
-
+        this.PC += 2
         if (this.V[X] == this.V[Y])
             this.PC += 2
     }
@@ -782,6 +747,7 @@ export class Chip8CPU{
     op_LD_vx_nn(){
         let X = this.X
         this.V[X] = this.nn
+        this.PC += 2
     }
    
     // # 7Xnn                                        to VX add nn
@@ -789,6 +755,7 @@ export class Chip8CPU{
         let X = this.X
         this.V[X] = (this.V[X] + this.nn) & 0xFF  // # need to take care of BYTES
         // #this.V[X] = (this.V[X] + this.nn) % 256
+        this.PC += 2
     }
 
     // # 8XY0                                           set to VX load VY
@@ -796,8 +763,9 @@ export class Chip8CPU{
     op_LD_vx_vy(){
         let X = this.X
         let Y = this.Y
-
+        
         this.V[X] = this.V[Y]
+        this.PC += 2
     }
 
     // # 8XY1                                            or vX,vY    VX = VX or VY
@@ -805,8 +773,9 @@ export class Chip8CPU{
     op_LD_vx_vx_or_vy(){
         let X = this.X
         let Y = this.Y
-
+        
         this.V[X] = (this.V[X] | this.V[Y]) & 0xFF  // # byte
+        this.PC += 2
     }
 
 
@@ -817,6 +786,7 @@ export class Chip8CPU{
         let Y = this.Y
 
         this.V[X] = (this.V[X] & this.V[Y]) & 0xFF      // # byte
+        this.PC += 2
     }
 
     // # 8XY3                                            to VX load (VX xor ^ VY)
@@ -827,6 +797,7 @@ export class Chip8CPU{
 
         // # byte       # xor vX,vY    VX = VX ^ VY
         this.V[X] = (this.V[X] ^ this.V[Y]) & 0xFF
+        this.PC += 2
     }
 
 
@@ -844,6 +815,7 @@ export class Chip8CPU{
 
         this.V[X] = val & 0xFF
         // #this.V[X] %= 256
+        this.PC += 2
     }
 
 
@@ -865,6 +837,7 @@ export class Chip8CPU{
         this.V[X] = val & 0xFF              //# take care of BYTES
         //# this.V[0xF] = (~(val >> 8)) & 0xFF
         //# something is not right here wven with ~
+        this.PC += 2
     }
 
 
@@ -883,6 +856,7 @@ export class Chip8CPU{
             this.V[0xF] = 0x0
 
         this.V[X] = val & 0xFF              // # take care of BYTES
+        this.PC += 2
     }
 
 
@@ -895,6 +869,7 @@ export class Chip8CPU{
 
         this.V[0xF] = this.V[X] & 0x01
         this.V[X] = (this.V[X] >> 1) & 0xFF
+        this.PC += 2
     }
 
     // # 8XYE                shift VX left by one.
@@ -904,6 +879,7 @@ export class Chip8CPU{
         let Y = this.Y
         this.V[0xF] = (this.V[X] >> 7) & 0x01
         this.V[X] = (this.V[X] << 1) & 0xFF
+        this.PC += 2
     }
 
 
@@ -913,6 +889,7 @@ export class Chip8CPU{
         let X = this.X
         let Y = this.Y
 
+        this.PC += 2    
         if (this.V[X] != this.V[Y])
             this.PC += 2
            //add_to_Vlog("EXEC op_SNE_vx_vy: " + X)
@@ -922,7 +899,7 @@ export class Chip8CPU{
 
     op_LOAD_I_nnn(){
         this.I = this.nnn
-            
+        this.PC += 2    
             //let tmp = this.nnn.toString(16).toUpperCase()
             // add_to_Vlog(`op_LOAD_I_nnn(${tmp})`)
         
@@ -933,7 +910,7 @@ export class Chip8CPU{
 
     op_JP_v0_nnn(){
         this.PC = this.nnn + this.V[0]
-        this.PC -= 2
+        // *** this.PC -= 2
     }
 
     // # 0xC000                            CXnn    VX = result of '&' on random number and NN
@@ -944,6 +921,7 @@ export class Chip8CPU{
         let rand = Math.floor(Math.random() * 0xFF)
 
         this.V[X] = (rand & nn) & 0xFF  // # byte
+        this.PC += 2
     }
 
 
@@ -956,6 +934,8 @@ export class Chip8CPU{
         let n = this.n
 
         this.V[0xF] = 0
+
+        this.draw_flag = true
        
 
         for ( let next_pix=0; next_pix < n; next_pix++)
@@ -972,6 +952,7 @@ export class Chip8CPU{
                 let sprite_bit = (pixel >> (7 - x_line)) & 1
 
                 let bit_pos = y_pos * DISPLAY_WIDTH + x_pos
+
                 let VRAM_old = this.screen.VRAM[bit_pos]
 
                 this.screen.VRAM[bit_pos] = VRAM_old ^ sprite_bit
@@ -979,54 +960,60 @@ export class Chip8CPU{
                 if (VRAM_old != 0 && this.screen.VRAM[bit_pos] == 0)
                     this.V[0xF] = 1
 
-                let new_x = x_pos * SCREEN_SCALE
-                let new_y = y_pos * SCREEN_SCALE
 
-                if (VRAM_old ^ sprite_bit)
 
-                    // if PYGAME_DISPLAY:
-                    // this.screen.VRAM[new_x: new_x + screen_scale,
-                    //             new_y: new_y + screen_scale] = COL_FG
-                    this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
-                else {
-                    if (this.V[0xF])
-                        // if PYGAME_DISPLAY:
-                        // this.screen.VRAM[new_x: new_x + screen_scale,
-                        //             new_y: new_y + screen_scale] = CLS_BG
-                        this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
-                        }
+                // *** Older solution, code moved outside ***
 
+                // let new_x = x_pos * SCREEN_SCALE
+                // let new_y = y_pos * SCREEN_SCALE
+
+                // if (VRAM_old ^ sprite_bit)
+
+                //     // if PYGAME_DISPLAY:
+                //     // this.screen.VRAM[new_x: new_x + screen_scale,
+                //     //             new_y: new_y + screen_scale] = COL_FG
+                //     this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
+                // else {
+                //     if (this.V[0xF])
+                //         // if PYGAME_DISPLAY:
+                //         // this.screen.VRAM[new_x: new_x + screen_scale,
+                //         //             new_y: new_y + screen_scale] = CLS_BG
+                //         this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
+                //         }
+
+            }
+
+
+            
+            //this.screen.draw()
         }
+    this.PC += 2
 
-
-        this.draw_flag = true
-        this.screen.draw()
-    }
-
+    this.draw_flag = false
     }
 
 
     // # 0xE09E                                    # Ex9E    skip next instruction if key stored in  VX  is pressed
     op_SKP_vx(){
         let X = this.X
-        
+        this.PC += 2
         if (this.keyboard.keysPressed[this.V[X] & 0xF] == 1)
             {
             this.PC += 2
-            add_to_Vlog("op_SKP_vx")
             }
+            
 
     }
 
     // # 0xE0A1                                    # ExA1    skip next instruction if key stored in  VX  is NOT pressed
     op_SKNP_vx(){
         let X = this.X
-
+        this.PC += 2
         if (this.keyboard.keysPressed[this.V[X] & 0xF] != 1)
             {
             this.PC += 2
-            add_to_Vlog("op_SKNP_vx")
             }
+            
 
     }
 
@@ -1035,6 +1022,7 @@ export class Chip8CPU{
     op_LD_VX_dt(){
         let X = this.X
         this.V[X] = this.time
+        this.PC += 2
     }
 
     // # 0xF00A                                    Fx0A    Wait for a key press, store the value of the key in Vx.
@@ -1042,21 +1030,30 @@ export class Chip8CPU{
     // #       then the value of that key is stored in Vx
     op_LD_VX_n(){
                 
-                // let tmp = this.n.toString(16).toUpperCase()
-                // add_to_Vlog( `op_LD_VX_n(${tmp})` )
-                // console.log( `op_LD_VX_n(${tmp})` )
-        add_to_Vlog("KB CHECK")        
+        this.paused = true
         let X = this.X
 
-        if( this.keyboard.keysPressed[this.keyboard.KEY_MAP[this.keyboard.key_down]] = 1 )
-            {
-                //# the NEEDED signal comes from the keyboard pressed
-            this.V[X] = this.keyboard.KEY_MAP[this.keyboard.key_down] 
-            add_to_Vlog("RRRRRRRRRR"+ this.keyboard.KEY_MAP[this.keyboard.key_down])
-            }
+        // if( this.keyboard.keysPressed[this.keyboard.KEY_MAP[this.keyboard.key_down]] == 1 )
+        // {
+        //         //# the NEEDED signal comes from the keyboard pressed
+        //     this.V[X] = this.keyboard.KEY_MAP[this.keyboard.key_down] 
+        //     console.log("RRRRRRRRRR"+ this.keyboard.KEY_MAP[this.keyboard.key_down])
+        // }
+        
+        
+        
+        let nextKeyPress = (key) => {
+            //console.log('KEY:::', key)
+            this.V[X] = key;
+            this.paused = false;
+            //this.PC += 2  //?
+        }
 
-        else
-            this.PC -= 2
+        
+        
+        this.keyboard.onNextKeyPress = nextKeyPress.bind(this);
+        this.PC += 2    // required by Lunar Lander, Clock ...
+        
 
     }
 
@@ -1065,7 +1062,7 @@ export class Chip8CPU{
     op_LD_st_VX(){
         let X = this.X
         this.tone = this.V[X]
-
+        this.PC += 2
         add_to_Vlog( `### SOUND` )
     }
 
@@ -1074,6 +1071,7 @@ export class Chip8CPU{
     op_LD_dt_VX(){
         let X = this.X
         this.time = this.V[X]
+        this.PC += 2
         
     }
 
@@ -1083,7 +1081,7 @@ export class Chip8CPU{
         let X = this.X
         this.I = (this.I & 0xFFF) + this.V[X]
         this.V[0xF] = this.I >> 12
-
+        this.PC += 2    
     }
 
     // # Fx29                                      Set I = location of sprite for digit Vx
@@ -1094,6 +1092,7 @@ export class Chip8CPU{
         this.I = (this.V[X] & 0xFF) * 5
             // #    for the hexadecimal sprite
             // #    corresponding to the value of Vx
+        this.PC += 2            
     }
 
     // # Fx33
@@ -1105,6 +1104,8 @@ export class Chip8CPU{
         this.memory[this.I & 0xFFF] = ((VX / 100) % 10) & 0xFF
         this.memory[(this.I + 1) & 0xFFF] = ((VX / 10) % 10) & 0xFF
         this.memory[(this.I + 2) & 0xFFF] = ((VX / 1) % 10) & 0xFF
+
+        this.PC += 2
     }
     
     // # Fx55
@@ -1114,6 +1115,7 @@ export class Chip8CPU{
 
         for (let i=0; i< X + 1; i++)
             this.memory[(this.I + i) & 0xFFF] = this.V[i]
+        this.PC += 2
     }
 
     // # Fx65                                        Fills V0 to VX (including VX) with values from memory starting at address I
@@ -1123,7 +1125,7 @@ export class Chip8CPU{
 
         for (let i=0; i< X + 1; i++)
             this.V[i] = this.memory[(this.I + i) & 0xFFF]
-
+        this.PC += 2
     }
 
 

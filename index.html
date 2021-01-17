@@ -39,12 +39,25 @@
 
     }       
 
+    #chip8_program_listing{
+        height:10em;
+        
+        /* BAR Works on Firefox */
+        
+        scrollbar-width: thin;
+        scrollbar-color: red green;
+        overflow:scroll;
+        cursor:pointer;
+
+    }
+
+
     .ch8MonCell, .ch8MonCell-active{ 
         display: inline-grid;
         border:1px solid rgb(0, 110, 33);
         width:19px;
         height:16px;
-        background-color: rgb(4, 24, 4);
+        background-color: rgb(17, 63, 17);
         color:white;
         font-size:0.7rem;
         align-items: center;
