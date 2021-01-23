@@ -1,10 +1,10 @@
 
-
-import {add_to_Vlog, add_to_Vstatus, clear_Vlog, arrays_equal, listArrayAsHEX, hex_dec, toHex, interfaceShow} from './base-utils.js';
-
-
+import { arrays_equal, listArrayAsHEX, hex_dec, toHex, beep} from './base-utils.js';
+import { add_to_Vlog, add_to_Vstatus, clear_Vlog, interfaceShow} from './app-utils-cfg.js';
 
 
+// PERFORMANCE TEST variables
+let testCPUCycleTime_start, testCPUCycleTime_end, testTime
 
 // CONSTANTS // CHIP8 definition
 
@@ -13,19 +13,14 @@ const DISPLAY_HEIGHT = 32                      // COLS / ROWS
 const DEVICE_SCREEN_IN_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT
 //DEVICE_SCREEN_PIXELS_COUNT = DISPLAY_WIDTH * SCREEN_SCALE * DISPLAY_HEIGHT * SCREEN_SCALE
 
-
 const SCREEN_SCALE = 8
 
 //const CLS_BG = "#0a0"
 const CLS_BG = "#040"
 
-
-
 const MEMORY_SIZE = 4096;
 const REGISTERS_NUM = 0x10
 const STACK_SIZE = 0x10
-
-
 
 
 export const FONTSET = 
@@ -177,31 +172,42 @@ export class Display_Screen{
 
 
     fill(bgColor) {
-       
         this.canvasCtx.fillStyle = bgColor;
         this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+
+
+
     draw() {
-        //this.canvasCtx.fillStyle = CLS_BG;
-        //this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        //this.fill(CLS_BG)
-        
-        for(let i=0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; i++) {
-            let x = (i % DISPLAY_WIDTH) * SCREEN_SCALE;
-            let y = Math.floor(i / DISPLAY_WIDTH) * SCREEN_SCALE;
+        // this.canvasCtx.fillStyle = CLS_BG;
+        // this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.fill('black')
+        this.canvasCtx.fillStyle = 'green'
+
+        let i,x,y
+
+        for(i=0; i < DEVICE_SCREEN_IN_PIXELS; i++) {
+            x = (i % DISPLAY_WIDTH) ;
+            y = Math.floor(i / DISPLAY_WIDTH) ;
 
             if(this.VRAM[i] == 1) 
-            {
-                this.canvasCtx.fillStyle = '#F0F';
-                
-            }
-            else this.canvasCtx.fillStyle = '#000';
-            this.canvasCtx.fillRect(x, y, SCREEN_SCALE, SCREEN_SCALE);
+                {
+                    //this.canvasCtx.fillStyle = '#'+(i*20)%255
+                this.canvasCtx.fillRect(x * SCREEN_SCALE, y * SCREEN_SCALE, SCREEN_SCALE, SCREEN_SCALE);
+                }
+             //else
+             //    this.canvasCtx.fillStyle = '#000';
+            
+            
+        
         }
 
 
     }
+
+
+
 
     setPixel(x, y) {
         if(x > DISPLAY_WIDTH)
@@ -520,28 +526,55 @@ export class Chip8CPU{
 
 
 
+    doBeep(vol, decay){
+        // setTimeout(()=> beep(vol, 4150, 50+decay ), 10)
+        // setTimeout(()=> beep(vol, 2000, 140+decay ), 20)
+        setTimeout(()=> beep(vol, 1000, 100+decay ), 30)
+    }
+
+
+
     
     RUNcycle(){
+
+        //console.log("running")
+        // PERFORMANCE TEST
+        //if(this.cycle_num%20==19)
+            // testCPUCycleTime_start = performance.now()
 
         // Decode & Execute
         this.OPCdecode()
 
         // TIMERS update
-            
 
         if (this.tone > 0)
             {
-            add_to_Vlog('SOUND');
-            //winsound.Beep(7000 - this.tone * 200, 5)    
-            this.tone -= 1    
-            }
+            //add_to_Vlog('SOUND');
             
-        if (this.time > 0)
-            this.time -= 1     
-    
+                setTimeout( ()=> this.doBeep(20, 0), 10 )
+                // setTimeout( ()=> this.doBeep(1, 0), 250 )
+                // setTimeout( ()=> this.doBeep(0.1, 40), 500 )
+                // setTimeout( ()=> this.doBeep(0.005, 0), 800 )
+            
+            this.tone--
+            }
+
+        if(this.cycle_num%20==0)
+            {
+            if (this.time > 0)
+                this.time--
+            }
             
         this.cycle_num += 1     //just for us
         //this.PC += 2
+
+        // PERFORMANCE TEST
+        //if(this.cycle_num%20==19)
+        // {
+        //     testCPUCycleTime_end = performance.now()
+        //     testTime = testCPUCycleTime_end - testCPUCycleTime_start
+        //     console.log('OPC EXECUTION TIME: ', testTime)
+        //     }
 
     }
 
@@ -556,8 +589,6 @@ export class Chip8CPU{
         
         if (interfaceShow.Monitor)
         {
-            
-            
 
             if(typeof(cell_active) != 'undefined' && cell_active != null)
                 {
@@ -620,15 +651,15 @@ export class Chip8CPU{
         
     try{
 
-        add_to_Vlog(  `<span class="hard-space" style=" white-space: pre">     </span>` +
-        `${this.cycle_num} Try: ${this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}</b>`)
+        // add_to_Vlog(  `<span class="hard-space" style=" white-space: pre">     </span>` +
+        // `${this.cycle_num} Try: ${this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}</b>`)
        
         this.opcode_lookup[ lookup ]()  // run the choosen method
 
     }
     catch (error)
         {
-        add_to_Vlog( `OPC lookup error: ${lookup.toString(16)}, ${error}`)
+        // add_to_Vlog( `OPC lookup error: ${lookup.toString(16)}, ${error}`)
         }
         
 
@@ -658,6 +689,7 @@ export class Chip8CPU{
     this.PC_prev = this.PC
     this.I_prev = this.I
 
+    return `this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}`
 
     }   // OPCdecode() {
 
@@ -931,62 +963,39 @@ export class Chip8CPU{
     op_D_XYN(){
         let X = this.V[this.X]
         let Y = this.V[this.Y]
-        let n = this.n
+        let n = this.n          // rows / bytes as rows of bits
 
         this.V[0xF] = 0
-
         this.draw_flag = true
-       
 
-        for ( let next_pix=0; next_pix < n; next_pix++)
+        let byte, sprite_bit, bit_pos, VRAM_old
+
+        for ( let row=0; row < n; row++)
             {
-            let pixel = this.memory[this.I + next_pix]
+                byte = this.memory[this.I + row]    // byte "is" a row
 
-            for (let x_line=0; x_line<8; x_line++)           //# 8 bits per line
+            for (let col=0; col<8; col++)           //# 8 bits per line
                 {
-                // #x_coord = X % display_width + x_row * 8
 
-                let x_pos = (X + x_line) % DISPLAY_WIDTH
-                let y_pos = (Y + next_pix) % DISPLAY_HEIGHT
+                sprite_bit = (byte >> (7 - col)) & 1
 
-                let sprite_bit = (pixel >> (7 - x_line)) & 1
+                bit_pos = (col + X) + (row + Y ) * DISPLAY_WIDTH 
 
-                let bit_pos = y_pos * DISPLAY_WIDTH + x_pos
-
-                let VRAM_old = this.screen.VRAM[bit_pos]
+                VRAM_old = this.screen.VRAM[bit_pos]
 
                 this.screen.VRAM[bit_pos] = VRAM_old ^ sprite_bit
 
-                if (VRAM_old != 0 && this.screen.VRAM[bit_pos] == 0)
+                //if (VRAM_old != 0 && this.screen.VRAM[bit_pos] == 0)
+                if (this.screen.VRAM[bit_pos] - VRAM_old < 0)
                     this.V[0xF] = 1
 
 
-
-                // *** Older solution, code moved outside ***
-
-                // let new_x = x_pos * SCREEN_SCALE
-                // let new_y = y_pos * SCREEN_SCALE
-
-                // if (VRAM_old ^ sprite_bit)
-
-                //     // if PYGAME_DISPLAY:
-                //     // this.screen.VRAM[new_x: new_x + screen_scale,
-                //     //             new_y: new_y + screen_scale] = COL_FG
-                //     this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
-                // else {
-                //     if (this.V[0xF])
-                //         // if PYGAME_DISPLAY:
-                //         // this.screen.VRAM[new_x: new_x + screen_scale,
-                //         //             new_y: new_y + screen_scale] = CLS_BG
-                //         this.screen.setPixel(new_x + SCREEN_SCALE, new_y + SCREEN_SCALE)
-                //         }
-
             }
-
-
             
-            //this.screen.draw()
+            
         }
+        //console.log(this.screen.VRAM)
+    this.screen.draw()
     this.PC += 2
 
     this.draw_flag = false
@@ -1063,7 +1072,7 @@ export class Chip8CPU{
         let X = this.X
         this.tone = this.V[X]
         this.PC += 2
-        add_to_Vlog( `### SOUND` )
+        console.log( `### SOUND` )
     }
 
     // # VX to DELAY TIMER
@@ -1127,6 +1136,8 @@ export class Chip8CPU{
             this.V[i] = this.memory[(this.I + i) & 0xFFF]
         this.PC += 2
     }
+
+
 
 
 }   // chip8CPU class
