@@ -3,12 +3,11 @@ import {Keyboard, Display_Screen, Chip8CPU, FONTSET} from './chip8CPUmod.js';
 import { hex_dec, beep} from './base-utils.js';
 import { add_to_Vlog, add_to_Vstatus, clear_Vlog, interfaceShow, clear_Vstatus} from './app-utils-cfg.js';
 
-
-//console.log('ENTERING JS')
 clear_Vlog()
 add_to_Vlog('<BR>ENTERING JS')
    
-var abc = 3
+
+let UpCycle = 18    // boost the clock ticks per frame
 
 
 function OnLoadFunction() {
@@ -16,11 +15,9 @@ function OnLoadFunction() {
     add_to_Vstatus("STATUS FIELD OK");
 
     const keyboard = new Keyboard();
-    const CHIP8_Screen = new Display_Screen(document.getElementById("screen"), 20);
-   
-    CHIP8_Screen.test()
+    const screen = new Display_Screen(document.getElementById("screen"), 20);
     
-    const CHIP8 = new Chip8CPU(keyboard, FONTSET, CHIP8_Screen)  // Initialize
+    const CHIP8 = new Chip8CPU(keyboard, FONTSET, screen)  // Initialize
     
     let ROM_dir = "./ROMs/"
     let ROM_filename
@@ -30,7 +27,7 @@ function OnLoadFunction() {
     //ROM_filename = "Maze.ch8"
     //ROM_filename = "random_number_test.ch8"
     //ROM_filename = "Breakout.ch8"
-    ROM_filename = "Invaders.ch8"
+    //ROM_filename = "Invaders.ch8"
      //ROM_filename = "SPACE-INVADER.ch8"
     //ROM_filename = "Brix.ch8"
     //ROM_filename = "ZeroDemo.ch8"       // ok
@@ -53,10 +50,10 @@ function OnLoadFunction() {
 
     //ROM_filename = "Paddles.ch8"       
     
-    ROM_filename = "Trip8.ch8"
+    //ROM_filename = "Trip8.ch8"
 
     //ROM_filename = "Clock.ch8"
-    //ROM_filename = "Tetris.ch8"
+    ROM_filename = "Tetris.ch8"
     
     //ROM_filename = "Blinky.ch8"
     //ROM_filename = "Blitz.ch8"
@@ -79,10 +76,7 @@ function OnLoadFunction() {
 
     console.log(hex_dec( 'STARTUP CHIP8.PC state:', CHIP8.PC))
 
-  
-
-
-    // PREPARE MAIN LOOP
+    // PREPARE the MAIN LOOP
 
     var FPS = 60                // required framerate
     var FPS_measured = 0        // measured CHIP8 framerate
@@ -95,7 +89,6 @@ function OnLoadFunction() {
 
    
     function MainLoop() {
-       
 
                 // if(interfaceShow.Vstatus)
                 //     clear_Vstatus();
@@ -109,7 +102,6 @@ function OnLoadFunction() {
                 // if(interfaceShow.Vstatus) add_to_Vstatus(`<BR>Elapsed time: ${elapsed} Delta: ${deltaTime} Passed: ${time_passed} <BR>`);
 
         FPScurrent = 1/ deltaTime
-        
         time_passed += deltaTime;
         // CPU TICK
 
@@ -120,7 +112,7 @@ function OnLoadFunction() {
             //  testCPUCycleTime_start = performance.now()
 
 
-    for(let k = 0;k<30;k++)              // SI - 10
+    for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
         {
         CHIP8.RUNcycle()
         //if(k%5==0)  CHIP8.screen.draw()
@@ -145,8 +137,8 @@ function OnLoadFunction() {
         
 
 
-       
-                //  && CHIP8.cycle_num < 200
+        // REQUIRED FPS - not used ATM
+
         //  if(time_passed > 1/FPS ){
 
         //     time_passed = 0;

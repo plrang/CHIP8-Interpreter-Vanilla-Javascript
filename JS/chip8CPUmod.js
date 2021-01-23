@@ -11,11 +11,9 @@ let testCPUCycleTime_start, testCPUCycleTime_end, testTime
 const DISPLAY_WIDTH = 64
 const DISPLAY_HEIGHT = 32                      // COLS / ROWS
 const DEVICE_SCREEN_IN_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT
-//DEVICE_SCREEN_PIXELS_COUNT = DISPLAY_WIDTH * SCREEN_SCALE * DISPLAY_HEIGHT * SCREEN_SCALE
 
 const SCREEN_SCALE = 8
 
-//const CLS_BG = "#0a0"
 const CLS_BG = "#040"
 
 const MEMORY_SIZE = 4096;
@@ -44,8 +42,6 @@ export const FONTSET =
 
 // CHIP8
 
-//const REGISTERS_NUM = 0x10
-
 //PC NUMPAD
 
 export class Keyboard {
@@ -59,8 +55,8 @@ export class Keyboard {
             // -3 = NUMPAD -0 = MAIN
             // y2020
 
-            '0-3': 0x0,    // N 0
-            '7-3': 0x1,   // 7
+            '0-3': 0x0,    // Num 0
+            '7-3': 0x1,   // ... 7
             '8-3': 0x2,   // 8
             '9-3': 0x3,   // 9
             '4-3': 0x4,   // 4
@@ -78,38 +74,15 @@ export class Keyboard {
         };
 
 
-        // OBSOLETE
-        // this.KEY_MAP = {
-        //     96: 0x0,    // N 0
-        //     103: 0x1,   // 7
-        //     104: 0x2,   // 8
-        //     105: 0x3,   // 9
-        //     100: 0x4,   // 4
-        //     101: 0x5,   // 5
-        //     102: 0x6,   // 6
-        //     97: 0x7,    // 1
-        //     98: 0x8,    // 2
-        //     99: 0x9,    // 3
-        //     65: 0xA,    // a
-        //     66: 0xB,    // b
-        //     67: 0xC,    // c
-        //     68: 0xD,    // d
-        //     69: 0xE,    // e
-        //     70: 0xF     // f
-        // };
-
-
-
     this.keysPressed = new Array(16);
     this.keysPressed.fill(0) 
-
     this.onNextKeyPress = null;        
 
     // Handle keyboard controls
 
     window.addEventListener("keydown", this.onKeyDown.bind(this), false);
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
-    
+  
     }
 
 
@@ -147,12 +120,6 @@ export class Keyboard {
 
 }
 
-//print(KEY_MAP)
-
-
-
-
-
 
 // DEVICE SCREEN OPS
 
@@ -168,6 +135,7 @@ export class Display_Screen{
         this.canvas.height = DISPLAY_HEIGHT * SCREEN_SCALE;
 
         this.canvasCtx = this.canvas.getContext('2d');
+     
     }
 
 
@@ -180,10 +148,8 @@ export class Display_Screen{
 
 
     draw() {
-        // this.canvasCtx.fillStyle = CLS_BG;
-        // this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.fill('black')
-        this.canvasCtx.fillStyle = 'green'
+        this.canvasCtx.fillStyle = '#0b0'
 
         let i,x,y
 
@@ -198,49 +164,16 @@ export class Display_Screen{
                 }
              //else
              //    this.canvasCtx.fillStyle = '#000';
-            
-            
         
         }
-
-
     }
 
-
-
-
-    setPixel(x, y) {
-        if(x > DISPLAY_WIDTH)
-            x -= DISPLAY_WIDTH;
-        else if(x < 0)
-            x += DISPLAY_WIDTH;
-
-        if(y > DISPLAY_HEIGHT)
-            y -= DISPLAY_HEIGHT;
-        else if(y<0)
-            y += DISPLAY_HEIGHT;
-
-        // this.VRAM[x + (y * DISPLAY_WIDTH)] ^= 1;
-
-        // return this.VRAM[x + (y * DISPLAY_WIDTH)] != 1;
-    }
-
-
-    test() {
-        this.setPixel(0, 0);
-        this.setPixel(5, 2);
-        this.setPixel(DISPLAY_WIDTH-1, DISPLAY_HEIGHT-1);
-        this.draw();
-        add_to_Vlog('Screen Test');
-        console.log('Screen Test');
-    }
-    
     clearVRAM() {
             this.VRAM = new Array(DISPLAY_WIDTH * DISPLAY_HEIGHT);
             for(let i=0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; i++)
                 this.VRAM[i] = 0;
 
-                console.log("CLEAR CLEAR CLEAR")
+            console.log("CLEAR CLEAR CLEAR")
         }
 }
 
@@ -258,8 +191,6 @@ export class Chip8CPU{
     this.keyboard = keyboard;   
     this.screen = screen;   
     this.memory = new Uint8Array(MEMORY_SIZE).fill(0);  // up to 4096
-
-    //this.fontset = fontset;
 
     for (let i = 0; i < fontset.length; i++) {
         this.memory[i] = fontset[i];
@@ -294,6 +225,8 @@ export class Chip8CPU{
 
     this.ROMloaded = ''
     this.cycle_num = 0
+    this.cycle_num_prev = 0
+
     this.PC_prev = this.PC
     this.I_prev = this.I
     this.paused = false
@@ -306,82 +239,56 @@ export class Chip8CPU{
 
     this.opcode_lookup = {
                               
-        0x0000 : ()=>this.op_CLS_RET_RCA_1802() ,      // 0 based opcodes for Clear screen, RTS and Calls RCA 1802 program at address NNN. Not necessary for most ROMs.                                
-        0x00E0 : ()=>this.op_CLS() ,                   // Clear VRAM
-        0x00EE : ()=>this.op_RTS() ,                   // Return From Subroutine
+        0x0000 : ()=>this.op_CLS_RET_RCA_1802() ,      
+        0x00E0 : ()=>this.op_CLS() ,                   
+        0x00EE : ()=>this.op_RTS() ,                   
         
-        0x1000 : ()=>this.op_JMP() ,                   // 1nnn JMP to nnn
-        0x2000 : ()=>this.op_SUB(),                   // 2nnn call SUBroutine at nnn. STORE STACK[++SP] = PC & PC = nn
+        0x1000 : ()=>this.op_JMP() ,                   
+        0x2000 : ()=>this.op_SUB(),                   
         
-        0x3000 : ()=>this.op_SE_vx_nn() ,              // 3Xnn SKIP next if VX == nn
-        0x4000 : ()=>this.op_SNE_vx_nn() ,             // 4Xnn SKIP next if VX != nn
+        0x3000 : ()=>this.op_SE_vx_nn() ,             
+        0x4000 : ()=>this.op_SNE_vx_nn() ,            
         
-        0x5000 : ()=>this.op_SE_vx_vy() ,              // 5Xnn SKIP next if VX == VY
+        0x5000 : ()=>this.op_SE_vx_vy() ,             
         
-        0x6000 : ()=>this.op_LD_vx_nn() ,              // 6Xnn    to VX load nn
-        0x7000 : ()=>this.op_ADD_vx_nn() ,             // 7Xnn    to VX add nn
+        0x6000 : ()=>this.op_LD_vx_nn() ,             
+        0x7000 : ()=>this.op_ADD_vx_nn() ,            
         
-        0x8000 : ()=>this.op_LD_vx_vy() ,              // 8XY0    to VX load VY
+        0x8000 : ()=>this.op_LD_vx_vy() ,             
         
-        0x8001 : ()=>this.op_LD_vx_vx_or_vy() ,        // 8XY1    to VX load (VX or | VY)
-        0x8002 : ()=>this.op_LD_vx_vx_and_vy() ,       // 8XY2    to VX load (VX and & VY)
-        0x8003 : ()=>this.op_LD_vx_vx_xor_vy() ,       // 8XY3    to VX load (VX xor ^ VY)
-        0x8004 : ()=>this.op_LD_vx_vx_add_vy() ,       // 8XY4    to VX add VY - if Carry , set  vF to 1, else 0
-        0x8005 : ()=>this.op_LD_vx_vx_sub_vy() ,       // 8XY5    to VX sub VY - VF is set to 0 when there's a borrow, and 1 when there isn't
-        0x8006 : ()=>this.op_SHR_vx() ,                // 8XY6    shift VX right by 1.     VF is set to value of  
-                                                //         least significant bit of VX before the shift
+        0x8001 : ()=>this.op_LD_vx_vx_or_vy() ,       
+        0x8002 : ()=>this.op_LD_vx_vx_and_vy() ,      
+        0x8003 : ()=>this.op_LD_vx_vx_xor_vy() ,      
+        0x8004 : ()=>this.op_LD_vx_vx_add_vy() ,      
+        0x8005 : ()=>this.op_LD_vx_vx_sub_vy() ,      
+        0x8006 : ()=>this.op_SHR_vx() ,               
+        0x8007 : ()=>this.op_SUBn_vx_vy() ,            
+        0x800E : ()=>this.op_SHL_vx() ,         
         
-        0x8007 : ()=>this.op_SUBn_vx_vy() ,            // 8XY7    set VX to VY minus VX. 
-                                                //         VF is set to 0 when there's a borrow, and 1 when there isn't.                    
+        0x9000 : ()=>this.op_SNE_vx_vy() ,      
         
-        0x800E : ()=>this.op_SHL_vx() ,                // 8XYE    Shifts VX left by one. 
-                                                //         VF is set to the value of the most significant bit of VX before the shift.
+        0xA000 : ()=>this.op_LOAD_I_nnn(),      
         
-        0x9000 : ()=>this.op_SNE_vx_vy() ,             // 9XY0    skips next instruction if VX != VY
+        0xB000 : ()=>this.op_JP_v0_nnn(),       
         
+        0xC000 :  ()=>this.op_RND_vx_nn(),      
         
-        0xA000 : ()=>this.op_LOAD_I_nnn(),             // Annn    ld I, nnn  - Annn - Sets I to the address nnn
-        
-        0xB000 : ()=>this.op_JP_v0_nnn(),              // Bnnn    JUMP to nnn + V0
-        
-        0xC000 :  ()=>this.op_RND_vx_nn(),              // CXnn    VX = result of '&' on random number and NN
-        
-        
-        0xD000 :  ()=>this.op_D_XYN() ,                  // Dxyn    DRAW
+        0xD000 :  ()=>this.op_D_XYN() ,         
 
-        0xE09E :  ()=>this.op_SKP_vx() ,                  // Ex9E    skip next instruction if key stored in VX is pressed
-        0xE0A1 :  ()=>this.op_SKNP_vx() ,                 // ExA1    skip next instruction if key stored in VX is NOT pressed
-        
-        
-        0xF007 :  ()=>this.op_LD_VX_dt() ,               // Fx07     VX =  this.time    
-        
-        0xF00A :  ()=>this.op_LD_VX_n() ,                // Fx0A    Wait for a key press, store the value of the key in Vx.
-                                                 //         All execution stops until a key is pressed, 
-                                                 //         then the value of that key is stored in Vx
-        
-        0xF015 :  ()=>this.op_LD_dt_VX() ,               // Fx15      this.time = VX    - delay timer set to VX
-        0xF018 :  ()=>this.op_LD_st_VX() ,               // Fx18      this.tune = VX    - sound timer set to VX
-        0xF01E :  ()=>this.op_ADD_i_VX() ,               // Fx1E     to I add VX
-        
-        
-        0xF029 :  ()=>this.op_LD_f_VX() ,               // Fx29      Set I = location of sprite for digit Vx
-                                                //             The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx
-        0xF033 :  ()=>this.op_LD_b_VX() ,               // Fx33      store BCD representation of Vx in memory locations I, I+1, and I+2
-                                                //               The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, 
-                                                //               the tens digit at location I+1, 
-                                                //               and the ones digit at location I+2
-        
-        0xF055 :  ()=>this.op_LD_i_VX() ,               // Fx55        put registers V0 - Vx in memory at location I >
-                                                
-                                                // Fx65        Fills V0 to VX (including VX) with values from memory starting at address I
-                                                //             fill V0 to VX with contents of mem[I]+
-    
+        0xE09E :  ()=>this.op_SKP_vx() ,        
+        0xE0A1 :  ()=>this.op_SKNP_vx() ,       
+       
+        0xF007 :  ()=>this.op_LD_VX_dt() ,   
+        0xF00A :  ()=>this.op_LD_VX_n() ,    
+        0xF015 :  ()=>this.op_LD_dt_VX() ,   
+        0xF018 :  ()=>this.op_LD_st_VX() ,   
+        0xF01E :  ()=>this.op_ADD_i_VX() ,   
+        0xF029 :  ()=>this.op_LD_f_VX() ,    
+        0xF033 :  ()=>this.op_LD_b_VX() ,    
+        0xF055 :  ()=>this.op_LD_i_VX() , 
         0xF065 :  ()=>this.op_LD_VX_i() 
-        
                                      
         }
-        
-
 
         // | biBwise OR
         this.switchLookUp = {
@@ -475,13 +382,6 @@ export class Chip8CPU{
 
             });
     
-    
-            
-
-
-  
-
-
     }
 
 
@@ -532,11 +432,8 @@ export class Chip8CPU{
         setTimeout(()=> beep(vol, 1000, 100+decay ), 30)
     }
 
-
-
     
     RUNcycle(){
-
         //console.log("running")
         // PERFORMANCE TEST
         //if(this.cycle_num%20==19)
@@ -565,6 +462,7 @@ export class Chip8CPU{
                 this.time--
             }
             
+        this.cycle_num_prev = this.cycle_num
         this.cycle_num += 1     //just for us
         //this.PC += 2
 
@@ -715,9 +613,7 @@ export class Chip8CPU{
 
     // # 0x00EE                                return from a subroutine
     op_RTS(){
-        // this.PC = this.stack[this.SP % 16]
         this.PC = this.stack[this.SP--%16]
-        //this.SP -= 1
         this.PC += 2
         
     } 
@@ -725,27 +621,16 @@ export class Chip8CPU{
     // # 0x1nnn                                jump to address NNN
     op_JMP(){
         this.PC = this.nnn
-
-       // this.PC += 2
-
     } 
 
     // # 0x2nnn         call a SUBroutine at nnn. STORE STACK[++SP] = PC & PC = nnn
-        // # increment stack pointer SP + 1 and put there current PC / program counter on the stack
+    // # increment stack pointer SP + 1 and put there current PC / program counter on the stack
     op_SUB(){       
-        //this.stack[this.SP % 16] = this.PC
-        //this.SP += 1
         this.stack[++this.SP%16] = this.PC
         this.PC = this.nnn                      // # new program counter PC
     }
 
-
-
-
-
-
     // # 3Xnn              skip the next instruction if VX == NN
-
     op_SE_vx_nn(){
         let X = this.X
         this.PC += 2
@@ -755,7 +640,6 @@ export class Chip8CPU{
     }
 
     // # 4Xnn                                 skip the next instruction if VX != NN
-
     op_SNE_vx_nn(){
         let X = this.X
         this.PC += 2
@@ -764,7 +648,6 @@ export class Chip8CPU{
     }
 
     // # 5XY0                                  skip the next instruction if VX == VY
-
     op_SE_vx_vy(){
         let X = this.X
         let Y = this.Y
@@ -775,7 +658,6 @@ export class Chip8CPU{
 
 
     // # 6Xnn                                        LD set VX to NN
-
     op_LD_vx_nn(){
         let X = this.X
         this.V[X] = this.nn
@@ -791,7 +673,6 @@ export class Chip8CPU{
     }
 
     // # 8XY0                                           set to VX load VY
-
     op_LD_vx_vy(){
         let X = this.X
         let Y = this.Y
@@ -801,7 +682,6 @@ export class Chip8CPU{
     }
 
     // # 8XY1                                            or vX,vY    VX = VX or VY
-
     op_LD_vx_vx_or_vy(){
         let X = this.X
         let Y = this.Y
@@ -812,7 +692,6 @@ export class Chip8CPU{
 
 
     // # 8XY2                                            to VX load (VX and & VY)
-
     op_LD_vx_vx_and_vy(){
         let X = this.X
         let Y = this.Y
@@ -822,7 +701,6 @@ export class Chip8CPU{
     }
 
     // # 8XY3                                            to VX load (VX xor ^ VY)
-
     op_LD_vx_vx_xor_vy(){
         let X = this.X
         let Y = this.Y
@@ -834,7 +712,6 @@ export class Chip8CPU{
 
 
     // # 8XY4                                        to VX add VY - if Carry , set  vF to 1, else 0
-
     op_LD_vx_vx_add_vy(){
         let X = this.X
         let Y = this.Y
@@ -852,7 +729,6 @@ export class Chip8CPU{
 
 
     // # 8XY5                                        VX =  VX sub VY ; VF is set to 0 when there's a borrow, and 1 when there isn't
-
     op_LD_vx_vx_sub_vy(){
         let X = this.X
         let Y = this.Y
@@ -872,10 +748,8 @@ export class Chip8CPU{
         this.PC += 2
     }
 
-
     // # 8XY7    set VX to VY minus VX.
     // #         VF is set to 0 when there's a borrow, and 1 when there isn't.
-
     op_SUBn_vx_vy(){
         let X = this.X
         let Y = this.Y
@@ -891,10 +765,8 @@ export class Chip8CPU{
         this.PC += 2
     }
 
-
     // # 8XY6                 shift VX right by 1.     VF is set to value of
     // #                      least significant bit of VX before the shift
-
     op_SHR_vx(){
         let X = this.X
         let Y = this.Y
@@ -916,7 +788,6 @@ export class Chip8CPU{
 
 
     // # 0x9000                9XY0    skips next instruction if VX != VY
-
     op_SNE_vx_vy(){
         let X = this.X
         let Y = this.Y
@@ -928,7 +799,6 @@ export class Chip8CPU{
     }
 
     // # Annn                            sets I to the address NNN.
-
     op_LOAD_I_nnn(){
         this.I = this.nnn
         this.PC += 2    
@@ -939,14 +809,12 @@ export class Chip8CPU{
 
         
     // # Bnnn                            JUMP to nnn + V0
-
     op_JP_v0_nnn(){
         this.PC = this.nnn + this.V[0]
         // *** this.PC -= 2
     }
 
     // # 0xC000                            CXnn    VX = result of '&' on random number and NN
-
     op_RND_vx_nn(){
         let X = this.X
         let nn = this.nn
@@ -958,8 +826,6 @@ export class Chip8CPU{
 
 
     // # DRAW *****************************************************************************
-
-
     op_D_XYN(){
         let X = this.V[this.X]
         let Y = this.V[this.Y]
@@ -995,9 +861,9 @@ export class Chip8CPU{
             
         }
         //console.log(this.screen.VRAM)
+    
     this.screen.draw()
     this.PC += 2
-
     this.draw_flag = false
     }
 
@@ -1010,8 +876,6 @@ export class Chip8CPU{
             {
             this.PC += 2
             }
-            
-
     }
 
     // # 0xE0A1                                    # ExA1    skip next instruction if key stored in  VX  is NOT pressed
@@ -1022,8 +886,6 @@ export class Chip8CPU{
             {
             this.PC += 2
             }
-            
-
     }
 
     // # Fx07                                            VX = self.time
@@ -1057,12 +919,9 @@ export class Chip8CPU{
             this.paused = false;
             //this.PC += 2  //?
         }
-
-        
         
         this.keyboard.onNextKeyPress = nextKeyPress.bind(this);
         this.PC += 2    // required by Lunar Lander, Clock ...
-        
 
     }
 
@@ -1138,10 +997,4 @@ export class Chip8CPU{
     }
 
 
-
-
 }   // chip8CPU class
-
-
-
-
