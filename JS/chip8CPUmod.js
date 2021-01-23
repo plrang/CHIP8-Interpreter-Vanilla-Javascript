@@ -93,7 +93,10 @@ export class Keyboard {
 
     onKeyDown(event) {
 
-        let key = this.KEY_MAP[event.key +'-' +event.location];    //event.which - deprec.
+        let keyID = event.key +'-' +event.location
+        let key = this.KEY_MAP[keyID];    //event.which - deprec.
+
+      
 
         this.keydown = key
         this.keysPressed[key] = 1;
@@ -111,11 +114,17 @@ export class Keyboard {
             this.onNextKeyPress(parseInt(key));
             this.onNextKeyPress = null;
         }
+
+        
     }
 
     onKeyUp(event) {
-        let key = this.KEY_MAP[event.key +'-' +event.location]; // event.which
+        let keyID = event.key +'-' +event.location
+        let key = this.KEY_MAP[keyID]; // event.which
+
         this.keysPressed[key] = 0;
+        
+
     }
 
 }
@@ -139,8 +148,9 @@ export class Display_Screen{
     }
 
 
-    fill(bgColor) {
-        this.canvasCtx.fillStyle = bgColor;
+    fillWith(bgColor) {
+
+        this.canvasCtx.fillStyle = bgColor ?? '#000';
         this.canvasCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
@@ -148,7 +158,7 @@ export class Display_Screen{
 
 
     draw() {
-        this.fill('black')
+        this.fillWith('black')
         this.canvasCtx.fillStyle = '#0b0'
 
         let i,x,y
@@ -169,10 +179,12 @@ export class Display_Screen{
     }
 
     clearVRAM() {
-            this.VRAM = new Array(DISPLAY_WIDTH * DISPLAY_HEIGHT);
+            
+            //this.VRAM.fill(0)
             for(let i=0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; i++)
                 this.VRAM[i] = 0;
 
+            //this.screen.fillWith()    
             console.log("CLEAR CLEAR CLEAR")
         }
 }
@@ -231,6 +243,9 @@ export class Chip8CPU{
     this.I_prev = this.I
     this.paused = false
     
+    this.tickFWD = false
+    this.tickBCK = false
+
 
     add_to_Vlog('chip8CPU REGISTERS ALL SET<BR>')
 
@@ -606,8 +621,9 @@ export class Chip8CPU{
     // # 0x00E0                                clear screen
     op_CLS() {
         this.PC += 2
-        console.log( 'OP: op_CLS')   
         this.screen.clearVRAM()
+        this.screen.draw()
+        console.log( 'OP: op_CLS')   
 
     } 
 
@@ -901,7 +917,7 @@ export class Chip8CPU{
     // #       then the value of that key is stored in Vx
     op_LD_VX_n(){
                 
-        this.paused = true
+        //this.paused = true
         let X = this.X
 
         // if( this.keyboard.keysPressed[this.keyboard.KEY_MAP[this.keyboard.key_down]] == 1 )
@@ -916,7 +932,7 @@ export class Chip8CPU{
         let nextKeyPress = (key) => {
             //console.log('KEY:::', key)
             this.V[X] = key;
-            this.paused = false;
+            //this.paused = false;
             //this.PC += 2  //?
         }
         

@@ -43,3 +43,16 @@ export function beep(vol, freq, duration){
       v.start(a.currentTime)
       v.stop(a.currentTime+duration*0.001)
     }
+
+
+
+
+const onKeyDown_app = (event) => {
+
+        //let key = this.KEY_MAP[event.key +'-' +event.location];    //event.which - deprec.
+        console.log('KEY: ', event.key +'-' +event.location)
+}
+
+
+window.addEventListener("keydown", onKeyDown_app.bind(), false)
+

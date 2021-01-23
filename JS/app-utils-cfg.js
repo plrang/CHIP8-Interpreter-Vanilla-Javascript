@@ -2,9 +2,9 @@
 // App interface display config
 
 export const interfaceShow = {
-    'ProgramListing' : false,
+    'ProgramListing' : true,
     'Monitor' : true,
-    'Vstatus' : false,
+    'Vstatus' : true,
     'Vlog' : false
 }
 

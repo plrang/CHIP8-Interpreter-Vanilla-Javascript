@@ -7,7 +7,7 @@ clear_Vlog()
 add_to_Vlog('<BR>ENTERING JS')
    
 
-let UpCycle = 18    // boost the clock ticks per frame
+let UpCycle = 1    // boost the clock ticks per frame
 
 
 function OnLoadFunction() {
@@ -18,12 +18,15 @@ function OnLoadFunction() {
     const screen = new Display_Screen(document.getElementById("screen"), 20);
     
     const CHIP8 = new Chip8CPU(keyboard, FONTSET, screen)  // Initialize
+
     
+    CHIP8.paused = true
+
     let ROM_dir = "./ROMs/"
     let ROM_filename
     
     //ROM_filename = "Chip8Picture.ch8"
-    //ROM_filename = "IBMLogo.ch8"
+    ROM_filename = "IBMLogo.ch8"
     //ROM_filename = "Maze.ch8"
     //ROM_filename = "random_number_test.ch8"
     //ROM_filename = "Breakout.ch8"
@@ -53,7 +56,7 @@ function OnLoadFunction() {
     //ROM_filename = "Trip8.ch8"
 
     //ROM_filename = "Clock.ch8"
-    ROM_filename = "Tetris.ch8"
+    //ROM_filename = "Tetris.ch8"
     
     //ROM_filename = "Blinky.ch8"
     //ROM_filename = "Blitz.ch8"
@@ -90,8 +93,8 @@ function OnLoadFunction() {
    
     function MainLoop() {
 
-                // if(interfaceShow.Vstatus)
-                //     clear_Vstatus();
+                if(interfaceShow.Vstatus)
+                    clear_Vstatus();
 
         // now = Date.now();        // deprec.
         let now = performance.now();
@@ -111,12 +114,39 @@ function OnLoadFunction() {
         // if(c_num)
             //  testCPUCycleTime_start = performance.now()
 
+            
 
-    for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
+    if(CHIP8.paused===false)    
         {
-        CHIP8.RUNcycle()
-        //if(k%5==0)  CHIP8.screen.draw()
+
+        for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
+            {
+            CHIP8.RUNcycle()
+            //if(k%5==0)  CHIP8.screen.draw()
+            }
+
         }
+        else 
+        {
+        if(CHIP8.tickFWD)   
+            {
+                //console.log('TICK FORWARD')
+            //CHIP8.PC+=2    
+            CHIP8.RUNcycle() 
+            CHIP8.paused = true
+            CHIP8.tickFWD = false
+            }
+        
+        if(CHIP8.tickBCK)   
+            {
+                //console.log('TICK BACK')
+            
+            CHIP8.PC-=4
+            CHIP8.RUNcycle() 
+            CHIP8.paused = true
+            CHIP8.tickBCK = false
+            }      
+        }  
         
     //CHIP8.screen.draw()
 
@@ -158,28 +188,28 @@ function OnLoadFunction() {
         // lastTime = now;
         
         
-        // if(interfaceShow.Vstatus)        
-        //     add_to_Vstatus(
-        //         lastTime 
-        //         + ' CPU cycle: ' + CHIP8.cycle_num
-        //         + ' FPS interval: ' 
-        //         + ' FPS HW current: ' + FPScurrent_show
-        //         + "<BR>Real / set FPS: " + FPS_measured_show
-        //         + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
-        //         + '<BR><BR>CHIP STATE'
-        //         + '<BR>SP: ' + CHIP8.SP
-        //         + '<BR>PC: ' + hex_dec('', CHIP8.PC)
-        //         + '<BR>OPC: ' + hex_dec('', CHIP8.opcode)
-        //         + '<BR>I: ' + hex_dec('', CHIP8.I)
-        //         + '<BR>STACK: ' + CHIP8.stack
-        //         + '<BR>V: ' + CHIP8.V
-        //         + '<BR>DTime: ' + CHIP8.time
-        //         + '<BR>DTone: ' + CHIP8.tone
-        //         + '<BR>Draw Flag: ' + CHIP8.draw_flag
-        //         + '<BR>VRAM: ' + CHIP8.screen.VRAM
-        //         + '<BR>RND: ' + Math.floor(Math.random() * 0xFF)
-        //         + '<BR>CHIP PAUSED: ' + CHIP8.paused
-        //     );
+        if(interfaceShow.Vstatus)        
+            add_to_Vstatus(
+                lastTime 
+                + ' CPU cycle: ' + CHIP8.cycle_num
+                + ' FPS interval: ' 
+                + ' FPS HW current: ' + FPScurrent_show
+                + "<BR>Real / set FPS: " + FPS_measured_show
+                + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
+                + '<BR><BR>CHIP STATE'
+                + '<BR>SP: ' + CHIP8.SP
+                + '<BR>PC: ' + hex_dec('', CHIP8.PC)
+                + '<BR>OPC: ' + hex_dec('', CHIP8.opcode)
+                + '<BR>I: ' + hex_dec('', CHIP8.I)
+                + '<BR>STACK: ' + CHIP8.stack
+                + '<BR>V: ' + CHIP8.V
+                + '<BR>DTime: ' + CHIP8.time
+                + '<BR>DTone: ' + CHIP8.tone
+                + '<BR>Draw Flag: ' + CHIP8.draw_flag
+                + '<BR>VRAM: ' + CHIP8.screen.VRAM
+                + '<BR>RND: ' + Math.floor(Math.random() * 0xFF)
+                + '<BR>CHIP PAUSED: ' + CHIP8.paused
+            );
 
         // if(interfaceShow.Vlog)                
         //     if(CHIP8.cycle_num%1300==1299)
@@ -218,7 +248,61 @@ function OnLoadFunction() {
     })
    
 
+
+
+
+
+
+
+    // PAUSE EXECUTION
+
+    const onKeyDown_app = (event) => {
+        let keyId = event.key +'-' +event.location
+        
+        if(keyId=='Pause-0')
+        {
+            //console.log('KEY: ', event.key +'-' +event.location)
+            CHIP8.paused = true
+        }
+    }
+    
+    const onKeyUp_app = (event) => {
+        let keyId = event.key +'-' +event.location
+        
+        if(keyId=='Pause-0')
+        {
+            //console.log('KEY: ', event.key +'-' +event.location)
+            CHIP8.paused = false
+        }
+
+        if(keyId=='p-0')
+            CHIP8.paused = true
+
+        if(keyId==']-0'){
+            CHIP8.tickFWD = true
+        }
+
+        if(keyId=='[-0')
+            CHIP8.tickBCK = true
+
+
+
+        
+
+    }
+
+    window.addEventListener("keydown", onKeyDown_app.bind(), false)
+    window.addEventListener("keyup", onKeyUp_app.bind(), false)
+    
+
+
+
+
 }
 
 window.onload = OnLoadFunction();
+
+
+
+
 
