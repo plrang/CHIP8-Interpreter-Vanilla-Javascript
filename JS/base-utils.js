@@ -3,6 +3,8 @@
 // https://www.30secondsofcode.org/blog/s/javascript-array-comparison
 // Might want to try that https://lodash.com/
 
+
+
 export const arrays_equal = (a, b) =>
     a.length === b.length 
     && a.every((v, i) => v === b[i]);
@@ -46,13 +48,4 @@ export function beep(vol, freq, duration){
 
 
 
-
-const onKeyDown_app = (event) => {
-
-        //let key = this.KEY_MAP[event.key +'-' +event.location];    //event.which - deprec.
-        console.log('KEY: ', event.key +'-' +event.location)
-}
-
-
-window.addEventListener("keydown", onKeyDown_app.bind(), false)
 

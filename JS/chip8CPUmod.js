@@ -439,13 +439,13 @@ export class Chip8CPU{
     }
     
 
-
-
     doBeep(vol, decay){
         // setTimeout(()=> beep(vol, 4150, 50+decay ), 10)
         // setTimeout(()=> beep(vol, 2000, 140+decay ), 20)
         setTimeout(()=> beep(vol, 1000, 100+decay ), 30)
     }
+
+
 
     
     RUNcycle(){
@@ -497,39 +497,8 @@ export class Chip8CPU{
         
     OPCdecode() {
 
-        
-        let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
-        
-        if (interfaceShow.Monitor)
-        {
-
-            if(typeof(cell_active) != 'undefined' && cell_active != null)
-                {
-                
-                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
-                cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
-                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
-                
-                if(this.cycle_num==0)   // mark the first cycle in Monitor
-                    {   
-                    cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
-                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
-                    cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
-                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
-                    //console.log("CYCLE 0", this.PC)
-                    }
-
-
-
-                cell_active = document.getElementById(`ch8MonCell-${this.I_prev}`)
-                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
-                cell_active = document.getElementById(`ch8MonCell-${this.I_prev+1}`)
-                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
-
-            }
-        
-    }
-    
+        // CODE MONITOR DISPLAY - configure in "app-utils-cfg.js" 
+        let monitor = this.monitorBegin()
         
         //// EXTRACT operands and data    http://devernay.free.fr/hacks/chip8/C8TECH10.HTM//1.0
         
@@ -559,55 +528,36 @@ export class Chip8CPU{
             {
             lookup = this.opcode & 0xF000
                // add_to_Vlog(`SUB OPC: <B>${this.opcode.toString(16)}</b>`)
-
             }
         
     try{
-
         // add_to_Vlog(  `<span class="hard-space" style=" white-space: pre">     </span>` +
         // `${this.cycle_num} Try: ${this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}</b>`)
        
         this.opcode_lookup[ lookup ]()  // run the choosen method
-
     }
     catch (error)
         {
         // add_to_Vlog( `OPC lookup error: ${lookup.toString(16)}, ${error}`)
         }
-        
 
     
-    if (interfaceShow.Monitor)
-    {
-        
-        
-            if(typeof(cell_active) != 'undefined' && cell_active != null)
-            {
-                cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
-                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
-
-                cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
-                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
+    // CODE MONITOR DISPLAY END
+    this.monitorEnd(monitor)
 
 
-                cell_active = document.getElementById(`ch8MonCell-${this.I}`)
-                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")
-
-                cell_active = document.getElementById(`ch8MonCell-${this.I+1}`)
-                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")            
-            }
-        
-            
-    }
     this.PC_prev = this.PC
     this.I_prev = this.I
 
-    return `this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}`
+
+    //return `this.opcode.toString(16)} : ${lookup.toString(16)} : <B>${this.opcode_lookup[ lookup ]}`
 
     }   // OPCdecode() {
 
 
 
+
+    
     // # ***************
     // # *** OPCODES ***
     // # ***************
@@ -1013,4 +963,70 @@ export class Chip8CPU{
     }
 
 
+
+
+
+    monitorBegin() {
+        
+        let cell_active = document.getElementById(`ch8MonCell-${this.PC_prev}`)
+
+        if (interfaceShow.Monitor)
+        {
+
+            if(typeof(cell_active) != 'undefined' && cell_active != null)
+                {
+                
+                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
+                cell_active = document.getElementById(`ch8MonCell-${this.PC_prev+1}`)
+                cell_active.setAttribute("style", "background-color:#000;color:white; font-weight:normal")
+                
+                if(this.cycle_num==0)   // mark the first cycle in Monitor
+                    {   
+                    cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
+                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
+                    cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
+                    cell_active.setAttribute("style", "background-color:#00F;color:yellow; font-weight:bold")
+                    //console.log("CYCLE 0", this.PC)
+                    }
+
+
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I_prev}`)
+                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
+                cell_active = document.getElementById(`ch8MonCell-${this.I_prev+1}`)
+                cell_active.setAttribute("style", "background-color:#000;color:red; border: 1px solid red;font-weight:normal")
+
+            }
+        
+    }
+
+    return cell_active  // [cell_active] found is passed then to [monitorEnd(cell_active)]
+
+    }
+
+    monitorEnd(cell_active) {
+        if (interfaceShow.Monitor)
+        {
+            
+            if(typeof(cell_active) != 'undefined' && cell_active != null)
+            {
+                cell_active = document.getElementById(`ch8MonCell-${this.PC}`)
+                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
+
+                cell_active = document.getElementById(`ch8MonCell-${this.PC+1}`)
+                cell_active.setAttribute("style", "background-color:#0F0;color:#000;font-weight:bold;font-size:1em")
+
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I}`)
+                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")
+
+                cell_active = document.getElementById(`ch8MonCell-${this.I+1}`)
+                cell_active.setAttribute("style", "background-color:#eee;color:#000; border: 1px solid blue;font-weight:bold")            
+            }
+                
+        }    
+    }
+
+
 }   // chip8CPU class
+

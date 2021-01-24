@@ -1,13 +1,25 @@
+// ******************************************************************************************
+// WORK IN PROGRESS
+// BE AWARE that some commits may not work, everything may change at any time
+// No warranties of any kind
+//
+// CHIP8 emulator / interpreter by PLRANG
+// Ported from the Python version by PLRANG https://github.com/plrang/CHIP-8-emulator-python
+// v 1.0
+//
+// DOCS, LINKS https://plrang.com/blog/chip8-emulator-making/
+// This is a working emulator, not finished,
+// the code architecture, formatting, comments and other planned functionalities
+// are not yet in place
+// ******************************************************************************************
 
 import {Keyboard, Display_Screen, Chip8CPU, FONTSET} from './chip8CPUmod.js';
 import { hex_dec, beep} from './base-utils.js';
 import { add_to_Vlog, add_to_Vstatus, clear_Vlog, interfaceShow, clear_Vstatus} from './app-utils-cfg.js';
 
 clear_Vlog()
-add_to_Vlog('<BR>ENTERING JS')
-   
 
-let UpCycle = 1    // boost the clock ticks per frame
+let UpCycle = 20    // boost the clock ticks per frame
 
 
 function OnLoadFunction() {
@@ -19,14 +31,15 @@ function OnLoadFunction() {
     
     const CHIP8 = new Chip8CPU(keyboard, FONTSET, screen)  // Initialize
 
-    
-    CHIP8.paused = true
+
+    CHIP8.paused = false
+
 
     let ROM_dir = "./ROMs/"
     let ROM_filename
     
     //ROM_filename = "Chip8Picture.ch8"
-    ROM_filename = "IBMLogo.ch8"
+    //ROM_filename = "IBMLogo.ch8"
     //ROM_filename = "Maze.ch8"
     //ROM_filename = "random_number_test.ch8"
     //ROM_filename = "Breakout.ch8"
@@ -49,11 +62,9 @@ function OnLoadFunction() {
 
     //ROM_filename = "LunarLander.ch8"       // ok
 
-
-
     //ROM_filename = "Paddles.ch8"       
     
-    //ROM_filename = "Trip8.ch8"
+    ROM_filename = "Trip8.ch8"
 
     //ROM_filename = "Clock.ch8"
     //ROM_filename = "Tetris.ch8"
@@ -63,7 +74,7 @@ function OnLoadFunction() {
     
     //ROM_filename = "Landing.ch8"       // ~~
     //ROM_filename = "KeypadTest.ch8"       // good for keypad checking
-    //ROM_filename = "Kaleid.ch8"       // ~
+    //ROM_filename = "Kaleid.ch8"       // ~?
     //ROM_filename = "AstroDodge.ch8"    
     //ROM_filename = "AnimalRace.ch8"    // weird 
     
@@ -116,41 +127,38 @@ function OnLoadFunction() {
 
             
 
-    if(CHIP8.paused===false)    
-        {
+        if(CHIP8.paused===false)    
+            {
 
-        for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
-            {
-            CHIP8.RUNcycle()
-            //if(k%5==0)  CHIP8.screen.draw()
-            }
+            for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
+                {
+                CHIP8.RUNcycle()
+                //if(k%5==0)  CHIP8.screen.draw()
+                }
 
-        }
-        else 
-        {
-        if(CHIP8.tickFWD)   
-            {
-                //console.log('TICK FORWARD')
-            //CHIP8.PC+=2    
-            CHIP8.RUNcycle() 
-            CHIP8.paused = true
-            CHIP8.tickFWD = false
             }
-        
-        if(CHIP8.tickBCK)   
-            {
-                //console.log('TICK BACK')
+            else 
+                {
+                    
+                if(CHIP8.tickFWD)   
+                    {
+                        //console.log('TICK FORWARD')
+                    CHIP8.RUNcycle() 
+                    CHIP8.paused = true
+                    CHIP8.tickFWD = false
+                    }
+                
+                if(CHIP8.tickBCK)   
+                    {
+                        //console.log('TICK BACK')
+                    CHIP8.PC-=4
+                    CHIP8.RUNcycle() 
+                    CHIP8.paused = true
+                    CHIP8.tickBCK = false
+                    }      
+                }  
             
-            CHIP8.PC-=4
-            CHIP8.RUNcycle() 
-            CHIP8.paused = true
-            CHIP8.tickBCK = false
-            }      
-        }  
-        
-    //CHIP8.screen.draw()
-
-
+        //CHIP8.screen.draw()
 
         // PERFORMANCE TEST
         //  if(c_num)
