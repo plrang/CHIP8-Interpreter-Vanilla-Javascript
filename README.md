@@ -11,3 +11,4 @@ ROMs directory doesn't contain any files, you need to find those online.
 
 To run open the **index.html** in a browser.
 
+Control with numpad keys, mapped in 'chip8CPUmod.js'.
