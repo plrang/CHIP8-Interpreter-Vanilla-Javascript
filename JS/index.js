@@ -1,25 +1,31 @@
 // ******************************************************************************************
 // WORK IN PROGRESS
-// BE AWARE that some commits may not work, everything may change at any time
-// No warranties of any kind
+// This piece of code is also my exploration ov the VANILLA JS, since the objective was to not use any frameworks
+// and learn new JS features as I go.
+// BE AWARE that some commits may not work, everything may change at any time.
+// It's not a tutorial kind of code, some parts are optimized, other are over verbosed.
+// Contains parts of Python code and comments I still use.
+// No warranties of any kind.
 //
 // CHIP8 emulator / interpreter by PLRANG
 // Ported from the Python version by PLRANG https://github.com/plrang/CHIP-8-emulator-python
-// v 1.0
+// v1.0
 //
 // DOCS, LINKS https://plrang.com/blog/chip8-emulator-making/
-// This is a working emulator, not finished,
+// This is a working emulator, yet not finished,
 // the code architecture, formatting, comments and other planned functionalities
 // are not yet in place
+// Additional Keys: P - pause, [ - back, ] - forward, Pause/Break - hold
+// mostly useful while showing the Monitor
 // ******************************************************************************************
 
-import {Keyboard, Display_Screen, Chip8CPU, FONTSET} from './chip8CPUmod.js';
-import { hex_dec, beep} from './base-utils.js';
-import { add_to_Vlog, add_to_Vstatus, clear_Vlog, interfaceShow, clear_Vstatus} from './app-utils-cfg.js';
+import { Keyboard, Display_Screen, Chip8CPU, FONTSET } from './chip8CPUmod.js';
+import { hex_dec } from './base-utils.js';
+import { add_to_Vlog, add_to_Vstatus, clear_Vlog, interfaceShow, clear_Vstatus } from './app-utils-cfg.js';
 
 clear_Vlog()
 
-let UpCycle = 20    // boost the clock ticks per frame
+let UpCycle = 50    // boost the clock ticks per frame
 
 
 function OnLoadFunction() {
@@ -44,7 +50,7 @@ function OnLoadFunction() {
     //ROM_filename = "random_number_test.ch8"
     //ROM_filename = "Breakout.ch8"
     //ROM_filename = "Invaders.ch8"
-     //ROM_filename = "SPACE-INVADER.ch8"
+    ROM_filename = "SPACE-INVADER.ch8"
     //ROM_filename = "Brix.ch8"
     //ROM_filename = "ZeroDemo.ch8"       // ok
      
@@ -53,7 +59,7 @@ function OnLoadFunction() {
     //ROM_filename = "Sierpinski.ch8" 
     
     //ROM_filename = "Airplane.ch8"
-    //ROM_filename = "UFO.ch8"
+    // ROM_filename = "UFO.ch8"
     //ROM_filename = "DelayTimerTest.ch8"
     //ROM_filename = "Life.ch8"
     //ROM_filename = "Stars.ch8"    
@@ -64,7 +70,7 @@ function OnLoadFunction() {
 
     //ROM_filename = "Paddles.ch8"       
     
-    ROM_filename = "Trip8.ch8"
+    //ROM_filename = "Trip8.ch8"
 
     //ROM_filename = "Clock.ch8"
     //ROM_filename = "Tetris.ch8"
@@ -107,7 +113,6 @@ function OnLoadFunction() {
                 if(interfaceShow.Vstatus)
                     clear_Vstatus();
 
-        // now = Date.now();        // deprec.
         let now = performance.now();
 
         let elapsed = now - lastTime;
@@ -125,38 +130,32 @@ function OnLoadFunction() {
         // if(c_num)
             //  testCPUCycleTime_start = performance.now()
 
-            
+        if (!CHIP8.paused) {
 
-        if(CHIP8.paused===false)    
+            for (let k = 0; k < UpCycle; k++)              // SI - 10, UFO - 5
             {
-
-            for(let k=0; k< UpCycle; k++)              // SI - 10, UFO - 5
-                {
                 CHIP8.RUNcycle()
                 //if(k%5==0)  CHIP8.screen.draw()
-                }
-
             }
-            else 
-                {
-                    
-                if(CHIP8.tickFWD)   
-                    {
-                        //console.log('TICK FORWARD')
-                    CHIP8.RUNcycle() 
-                    CHIP8.paused = true
-                    CHIP8.tickFWD = false
-                    }
-                
-                if(CHIP8.tickBCK)   
-                    {
-                        //console.log('TICK BACK')
-                    CHIP8.PC-=4
-                    CHIP8.RUNcycle() 
-                    CHIP8.paused = true
-                    CHIP8.tickBCK = false
-                    }      
-                }  
+
+        }
+        else {
+
+            if (CHIP8.tickFWD) {
+                //console.log('TICK FORWARD')
+                CHIP8.RUNcycle()
+                CHIP8.paused = true
+                CHIP8.tickFWD = false
+            }
+
+            if (CHIP8.tickBCK) {
+                //console.log('TICK BACK')
+                CHIP8.PC -= 4
+                CHIP8.RUNcycle()
+                CHIP8.paused = true
+                CHIP8.tickBCK = false
+            }
+        }  
             
         //CHIP8.screen.draw()
 
@@ -195,12 +194,12 @@ function OnLoadFunction() {
 
         // lastTime = now;
         
-        
-        if(interfaceShow.Vstatus)        
+
+        if (interfaceShow.Vstatus)
             add_to_Vstatus(
-                lastTime 
+                lastTime
                 + ' CPU cycle: ' + CHIP8.cycle_num
-                + ' FPS interval: ' 
+                + ' FPS interval: '
                 + ' FPS HW current: ' + FPScurrent_show
                 + "<BR>Real / set FPS: " + FPS_measured_show
                 + '<BR>KB: ' + CHIP8.keyboard.keysPressed.toString()
@@ -233,28 +232,28 @@ function OnLoadFunction() {
     var loop
     let waitingTimer  
 
-    let checkROMLoaded = new Promise( function(resolve, reject) {
-      
-        waitingTimer = setInterval(()=>{
-            console.log('WAITING FOR ROM', CHIP8.ROMloaded) 
-            if(CHIP8.ROMloaded) {
-                clearInterval( waitingTimer)
+    let checkROMLoaded = new Promise(function (resolve, reject) {
+
+        waitingTimer = setInterval(() => {
+            console.log('WAITING FOR ROM', CHIP8.ROMloaded)
+            if (CHIP8.ROMloaded) {
+                clearInterval(waitingTimer)
                 resolve('RESOLVE: ROM LOADED')
             }
             else reject('REJECT: WAITING FOR ROM...');
-            
+
         }, 1000);
 
     })
 
 
-    checkROMLoaded.then((msg)=>{
+    checkROMLoaded.then((msg) => {
         console.log(`${msg} : START the LOOP`);
         lastTime = performance.now();
 
-        loop = requestAnimationFrame( MainLoop ) 
+        loop = requestAnimationFrame(MainLoop)
     })
-   
+
 
 
 
@@ -265,46 +264,36 @@ function OnLoadFunction() {
     // PAUSE EXECUTION
 
     const onKeyDown_app = (event) => {
-        let keyId = event.key +'-' +event.location
-        
-        if(keyId=='Pause-0')
-        {
+        let keyId = event.key + '-' + event.location
+
+        if (keyId == 'Pause-0') {
             //console.log('KEY: ', event.key +'-' +event.location)
             CHIP8.paused = true
         }
     }
-    
+
     const onKeyUp_app = (event) => {
-        let keyId = event.key +'-' +event.location
-        
-        if(keyId=='Pause-0')
-        {
+        let keyId = event.key + '-' + event.location
+
+        if (keyId == 'Pause-0') {
             //console.log('KEY: ', event.key +'-' +event.location)
             CHIP8.paused = false
         }
 
-        if(keyId=='p-0')
+        if (keyId == 'p-0')
             CHIP8.paused = true
 
-        if(keyId==']-0'){
+        if (keyId == ']-0') {
             CHIP8.tickFWD = true
         }
 
-        if(keyId=='[-0')
+        if (keyId == '[-0')
             CHIP8.tickBCK = true
-
-
-
-        
 
     }
 
     window.addEventListener("keydown", onKeyDown_app.bind(), false)
     window.addEventListener("keyup", onKeyUp_app.bind(), false)
-    
-
-
-
 
 }
 

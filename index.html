@@ -1,117 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CHIP 8 INTERPRETER in Javascript WIP</title>
-    
-<style type="text/css">
-    body{
-        background-color: #000;
-        color: rgb(0, 170, 0);
-        font-family:'Lucida Sans', 'Lucida Sans Regular', Geneva, Verdana, sans-serif;
-        font-size: 0.9em;
-        
-        font-weight:normal ;
-        white-space: nowrap ;
-        
-        }
-    #status_display {
-        margin-top:1em;
-        }
 
-    #chip8_monitor {
-        display:grid;
-        width:100%;
-        border:1px solid red;
-        grid-column-gap: 2px;
-        grid-row-gap: 2px;
-        grid-template-columns: repeat(32, 18px);
-        
-        height:20em;
-        
-        /* BAR Works on Firefox */
-        
-        scrollbar-width: thin;
-        scrollbar-color: red green;
-        overflow:scroll;
-        cursor:pointer;
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CHIP 8 INTERPRETER in Javascript WIP</title>
 
-    }       
+        <style type="text/css">
+            body {
+                background-color: #000;
+                color: rgb(0, 170, 0);
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', Geneva, Verdana, sans-serif;
+                font-size: 0.9em;
 
-    #chip8_program_listing{
-        height:10em;
-        
-        /* BAR Works on Firefox */
-        
-        scrollbar-width: thin;
-        scrollbar-color: red green;
-        overflow:scroll;
-        cursor:pointer;
+                font-weight: normal;
+                white-space: nowrap;
 
-    }
+            }
 
+            #status_display {
+                margin-top: 1em;
+            }
 
-    .ch8MonCell, .ch8MonCell-active{ 
-        display: inline-grid;
-        border:1px solid rgb(0, 110, 33);
-        width:19px;
-        height:16px;
-        background-color: rgb(17, 63, 17);
-        color:white;
-        font-size:0.7rem;
-        align-items: center;
-        justify-items: center;
-    }       
-    
-    .ch8MonCell-active { 
-        
-        background-color:black !important;
-        
-    }       
+            #chip8_monitor {
+                display: grid;
+                width: 100%;
+                border: 1px solid red;
+                grid-column-gap: 2px;
+                grid-row-gap: 2px;
+                grid-template-columns: repeat(32, 18px);
+
+                height: 20em;
+
+                /* BAR Works on Firefox */
+
+                scrollbar-width: thin;
+                scrollbar-color: red green;
+                overflow: scroll;
+                cursor: pointer;
+
+            }
+
+            #chip8_program_listing {
+                height: 10em;
+
+                /* BAR Works on Firefox */
+
+                scrollbar-width: thin;
+                scrollbar-color: red green;
+                overflow: scroll;
+                cursor: pointer;
+
+            }
 
 
-    h1 {
-        margin-top:1rem;
-        margin-bottom:1rem;
-        font-size:1.4em;
-        }
-</style>
+            .ch8MonCell,
+            .ch8MonCell-active {
+                display: inline-grid;
+                border: 1px solid rgb(0, 110, 33);
+                width: 19px;
+                height: 16px;
+                background-color: rgb(17, 63, 17);
+                color: white;
+                font-size: 0.7rem;
+                align-items: center;
+                justify-items: center;
+            }
 
-</head>
-<body>
-    <div><b>CHIP 8</b></div>
-    <main>
-        
-        <div id="chip8_program_listing">
-            IDLE: CHIP8 Loaded Program Listing Display
-        </div>
+            .ch8MonCell-active {
 
-        <div id="chip8_monitor">
-         IDLE: CHIP8 Visual Monitor
-        </div>
-        
-        <div class="console">
-            <h1>DISPLAY SCREEN</h1>
-            <canvas id="screen"></canvas>
-    
-        </div>
-    
+                background-color: black !important;
+
+            }
 
 
-        <div id="status_display">
-            <div id="Vstatus_field">
-                STATUS IDLE...
+            h1 {
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+                font-size: 1.4em;
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <div><b>CHIP 8</b></div>
+        <main>
+
+            <div id="chip8_program_listing">
+                IDLE: CHIP8 Loaded Program Listing Display
             </div>
-            <div id="Vlog_field">
-                LOG IDLE...
+
+            <div id="chip8_monitor">
+                IDLE: CHIP8 Visual Monitor
             </div>
-        </div>
 
-    </main>
+            <div class="console">
+                <h1>DISPLAY SCREEN</h1>
+                <canvas id="screen"></canvas>
+
+            </div>
 
 
 
-</body>
-<script src="JS/index.js"  type="module"></script>
+            <div id="status_display">
+                <div id="Vstatus_field">
+                    STATUS IDLE...
+                </div>
+                <div id="Vlog_field">
+                    LOG IDLE...
+                </div>
+            </div>
+
+        </main>
+
+
+
+    </body>
+    <script src="JS/index.js" type="module"></script>
+
 </html>
