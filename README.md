@@ -11,5 +11,10 @@ ROMs directory doesn't contain any files, you need to find those online.
 
 To run open the **index.html** in a browser.
 
-Control with numpad keys, mapped in 'chip8CPUmod.js'. 
-For example in "Space Invaders" use num5 as fire, num 4 and num6 as left / right.
+## Keyboard Input
+
+Control with numpad keys, mapped in 'chip8CPUmod.js'.
+Example: "Space Invaders" use num5 as fire, num 4 and num6 as left / right.
+
+Additional Keys: P - pause, [ - back, ] - forward, Pause/Break - hold
+Those can be used while showing the code monitor.
