@@ -5,5 +5,8 @@ todo-chip8.txt
 test*
 ROMs_test/*
 ROMs/*
+
+!ROMs/SPACE-INVADER.ch8
+
 venv/
 .vscode
