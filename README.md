@@ -1,5 +1,7 @@
 # CHIP8 emulator / interpreter in Vanilla JS
 
+[Live demo ](https://plrang.github.io/CHIP8-Interpreter-Vanilla-Javascript/)
+
 More information in [CHIP-8-emulator-python](https://github.com/plrang/CHIP-8-emulator-python)
 
 Additional information and short clips in a [blog post](https://plrang.com/chip-8-emulator-in-javascript-that-runs-in-the-browser/)
