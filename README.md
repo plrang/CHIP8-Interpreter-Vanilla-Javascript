@@ -9,7 +9,7 @@ Additional information and short clips in a [blog post](https://plrang.com/chip-
 Because JavaScript allows for fast prototyping, I was able to easily add a live monitor and disassembler. I wish I had more time to write my own assembler and some CHIP 8 programs, but I’ve moved on to a different project for now.
 ..."
 
-ROMs directory doesn't contain any files, you need to find those online.
+ROMs directory contains one ROM file, [more ROMs](https://github.com/dmatlack/chip8/tree/master/roms/games)
 
 To run open the **index.html** in a browser.
 
